@@ -103,7 +103,7 @@ open class CLIWrapper: CLICommandCollection {
                 createCLIHelpProcess: @escaping CreateProcess) {
         
         
-        self.rootGroup = CLICommandGroup(command: "",
+        self.rootGroup = CLICommandGroup.init(command: "",
                                          helpAction: helpAction.groupHelpAction,
                                          defaultAction: nil,
                                          cli: CLIInterface(outputQueue: outputQueue ?? DispatchQueue(label: "CLIWrapper.Output.Queue"),
@@ -312,3 +312,24 @@ public extension CLIWrapper {
 }
 
 
+public extension CLIWrapper {
+    /// Executes the help command
+    /// - Parameters:
+    ///   - arguments: An array of all arguments (excluding the executable argument)
+    ///   - environment: The environmental variables to set to the cli sub process if called
+    ///   - currentDirectory: Set the current working directory
+    ///   - message: A custom message to display with the help message.
+    ///   If the action is passthrough then the message will be displayed before the real help message
+    /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
+    @discardableResult
+    func displayUsage(arguments: [String] = [],
+                      environment: [String: String]? = nil,
+                      currentDirectory: URL? = nil,
+                      withMessage message: String? = nil) throws -> Int32 {
+        return try self.rootGroup.executeHelp(argumentStartingAt: 0,
+                                              arguments: arguments,
+                                              environment: environment,
+                                              currentDirectory: currentDirectory,
+                                              withMessage: message)
+    }
+}

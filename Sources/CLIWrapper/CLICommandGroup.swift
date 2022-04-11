@@ -301,7 +301,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
     /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
     @discardableResult
     public func executeHelp(argumentStartingAt: Int = 0,
-                            arguments: [String],
+                            arguments: [String] = [],
                             environment: [String: String]? = nil,
                             currentDirectory: URL? = nil,
                             withMessage message: String? = nil) throws -> Int32 {
