@@ -231,7 +231,8 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                             environment: [String: String]? = nil,
                                             currentDirectory: URL? = nil,
                                             standardInput: Any? = nil) throws -> Int32? {
-        if let command = self.commands.first(where: { return $0.command.matches(arguments[argumentStartingAt]) }) {
+        if arguments.count > argumentStartingAt,
+           let command = self.commands.first(where: { return $0.command.matches(arguments[argumentStartingAt]) }) {
             return try command.executeIfWrapped(parent: self,
                                                 argumentStartingAt: argumentStartingAt + 1,
                                                 arguments: arguments,
@@ -262,7 +263,8 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                    currentDirectory: URL? = nil,
                                    standardInput: Any? = nil) throws -> Int32 {
         
-        if let command = self.commands.first(where: { return $0.command.matches(arguments[argumentStartingAt]) }) {
+        if arguments.count > argumentStartingAt,
+           let command = self.commands.first(where: { return $0.command.matches(arguments[argumentStartingAt]) }) {
             return try command.execute(parent: self,
                                        argumentStartingAt: argumentStartingAt + 1,
                                        arguments: arguments,
