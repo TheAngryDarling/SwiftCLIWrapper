@@ -9,14 +9,17 @@ import Foundation
 import Dispatch
 import RegEx
 import CLICapture
+import SynchronizeObjects
 
 /// Class representing the CLI Command
 open class CLIWrapper: CLICommandCollection {
-    
+    /// Action to execute for help actions
     public enum HelpAction {
+        /// Pass through to the CLI proces
         case passthrough
+        /// Execute a custom action
         case custom(CLIHelpAction)
-        
+        /// Converstion from CLIWrapper.HelpAction to CLICommandGroup.HelpAction
         fileprivate var groupHelpAction: CLICommandGroup.HelpAction {
             switch self {
                 case .passthrough:
@@ -27,9 +30,11 @@ open class CLIWrapper: CLICommandCollection {
         }
     }
     
+    /// STD Capturing for the CLICapture
     public struct STDOutputCapturing {
-        
+        /// The buffer to use to capture STD Output from the CL Interface
         public var processBuffer: CLICapture.STDOutputBuffer?
+        /// The buffer to use to capture the STD Output from the CL Help Interface
         public var helpProcessBuffer: CLICapture.STDOutputBuffer?
         
         private init(processBuffer: CLICapture.STDOutputBuffer?,
@@ -62,40 +67,49 @@ open class CLIWrapper: CLICommandCollection {
     /// Closure used to identify if the arguments contain any arguments that would show the help screen
     public typealias HelpArgumentIdentifier = (_ arguments: [String]) -> Bool
     
-    
-    public class CLIInterface: CLICapture {
+    /// Interface used to call / capture CLI commands
+    public class CLInterface: CLICapture {
+        /// Interface used to call / capture CLI help commands
         public let help: CLICapture
         
-        public init(outputQueue: DispatchQueue,
+        
+        /// Create new Command Line Interface Object
+        /// - Parameters:
+        ///   - outputLock: The object used to synchronized output calls
+        ///   - outputCapturing: The object used to redirect STD writes from the CLICapture objects
+        ///   - createProcess: Closure used to create a new CLI Process
+        ///   - createHelpProcess: Closure used to create new CLI Help Process
+        public init(outputLock: Lockable,
                     outputCapturing: STDOutputCapturing? = nil,
                     createProcess: @escaping CLICapture.CreateProcess,
                     createHelpProcess: @escaping CLICapture.CreateProcess) {
-            self.help = CLICapture(outputQueue: outputQueue,
-                                   stdOutBuffer: outputCapturing?.helpProcessBuffer,
-                                   stdErrBuffer:  outputCapturing?.helpProcessBuffer,
-                                   createProcess: createHelpProcess)
-            super.init(outputQueue: outputQueue,
+            self.help = .init(outputLock: outputLock,
+                              stdOutBuffer: outputCapturing?.helpProcessBuffer,
+                              stdErrBuffer:  outputCapturing?.helpProcessBuffer,
+                              createProcess: createHelpProcess)
+            super.init(outputLock: outputLock,
                        stdOutBuffer: outputCapturing?.processBuffer,
                        stdErrBuffer:  outputCapturing?.processBuffer,
                        createProcess: createProcess)
         }
     }
     
-    
+    /// The root group of the commands
     private let rootGroup: CLICommandGroup
+    /// Access to the Command Line Interface Object
     public var cli: CLICapture { return self.rootGroup.cli }
     
     
     
     /// Create a new CLIWrapper
     /// - Parameters:
-    ///   - outputQueue: The queue to use to execute output actions in sequential order
+    ///   - outputLock: The object used to synchronized output calls
     ///   - helpRequestIdentifier: Closure used to identify if help handler should be called
     ///   - helpAction: The help handler to execute
     ///   - outputCapturing: The capturing option to capture data being directed to the output
     ///   - createCLIProcess: The closure used to create the cli process
     ///   - createCLIHelpProcess: The closure used to create the cli Help process
-    public init(outputQueue: DispatchQueue? = nil,
+    public init(outputLock: Lockable = NSLock(),
                 helpRequestIdentifier: @escaping HelpArgumentIdentifier = CLIWrapper.defaultHelpRequestIdentifier,
                 helpAction: HelpAction = .passthrough,
                 outputCapturing: STDOutputCapturing? = nil,
@@ -103,25 +117,25 @@ open class CLIWrapper: CLICommandCollection {
                 createCLIHelpProcess: @escaping CreateProcess) {
         
         
-        self.rootGroup = CLICommandGroup.init(command: "",
-                                         helpAction: helpAction.groupHelpAction,
-                                         defaultAction: nil,
-                                         cli: CLIInterface(outputQueue: outputQueue ?? DispatchQueue(label: "CLIWrapper.Output.Queue"),
-                                                           outputCapturing: outputCapturing,
-                                                           createProcess: createCLIProcess,
-                                                           createHelpProcess: createCLIHelpProcess),
-                                         helpRequestIdentifier: helpRequestIdentifier)
+        self.rootGroup = .init(command: "",
+                               helpAction: helpAction.groupHelpAction,
+                               defaultAction: nil,
+                               cli: .init(outputLock: outputLock,
+                                          outputCapturing: outputCapturing,
+                                          createProcess: createCLIProcess,
+                                          createHelpProcess: createCLIHelpProcess),
+                               helpRequestIdentifier: helpRequestIdentifier)
     }
     
     /// Create a new CLIWrapper
     /// - Parameters:
-    ///   - outputQueue: The queue to use to execute output actions in sequential order
+    ///   - outputLock: The object used to synchronized output calls
     ///   - helpArguments: An array of arguments that can be used to call the help screen
     ///   - helpAction: The help handler to execute
     ///   - outputCapturing: The capturing option to capture data being directed to the output
     ///   - createCLIProcess: The closure used to create the cli process
     ///   - createCLIHelpProcess: The closure used to create the cli Help process
-    public init(outputQueue: DispatchQueue? = nil,
+    public init(outputLock: Lockable = NSLock(),
                 helpArguments: [String],
                 helpAction: HelpAction = .passthrough,
                 outputCapturing: STDOutputCapturing? = nil,
@@ -149,26 +163,26 @@ open class CLIWrapper: CLICommandCollection {
                                     standardInput)
         }
         
-        self.rootGroup = CLICommandGroup(command: "",
-                                         helpAction: helpAction.groupHelpAction,
-                                         defaultAction: nil,
-                                         cli: CLIInterface(outputQueue: outputQueue ?? DispatchQueue(label: "CLIWrapper.Output.Queue"),
-                                                           outputCapturing: outputCapturing,
-                                                           createProcess: createCLIProcess,
-                                                           createHelpProcess: createCLIHelpProcess),
-                                         helpRequestIdentifier: helpRequestIdentifier)
+        self.rootGroup = .init(command: "",
+                               helpAction: helpAction.groupHelpAction,
+                               defaultAction: nil,
+                               cli: .init(outputLock: outputLock,
+                                          outputCapturing: outputCapturing,
+                                          createProcess: createCLIProcess,
+                                          createHelpProcess: createCLIHelpProcess),
+                               helpRequestIdentifier: helpRequestIdentifier)
     }
     
     
     /// Create a new CLIWrapper
     /// - Parameters:
-    ///   - outputQueue: The queue to use to execute output actions in sequential order
+    ///   - outputLock: The object used to synchronized output calls
     ///   - helpArguments: An array of arguments that can be used to call the help screen
     ///   - helpAction: The help handler to execute
     ///   - outputCapturing: The capturing option to capture data being directed to the output
     ///   - createCLIProcess: The closure used to create the cli process
     ///   - executable: The URL to the executable
-    public init(outputQueue: DispatchQueue? = nil,
+    public init(outputLock: Lockable = NSLock(),
                 helpArguments: [String],
                 helpAction: HelpAction = .passthrough,
                 outputCapturing: STDOutputCapturing? = nil,
@@ -218,14 +232,14 @@ open class CLIWrapper: CLICommandCollection {
                                     standardInput)
         }
         
-        self.rootGroup = CLICommandGroup(command: "",
-                                         helpAction: helpAction.groupHelpAction,
-                                         defaultAction: nil,
-                                         cli: CLIInterface(outputQueue: outputQueue ?? DispatchQueue(label: "CLIWrapper.Output.Queue"),
-                                                           outputCapturing: outputCapturing,
-                                                           createProcess: createCLIProcess,
-                                                           createHelpProcess: createCLIHelpProcess),
-                                         helpRequestIdentifier: helpRequestIdentifier)
+        self.rootGroup = .init(command: "",
+                               helpAction: helpAction.groupHelpAction,
+                               defaultAction: nil,
+                               cli: .init(outputLock: outputLock,
+                                          outputCapturing: outputCapturing,
+                                          createProcess: createCLIProcess,
+                                          createHelpProcess: createCLIHelpProcess),
+                               helpRequestIdentifier: helpRequestIdentifier)
     }
     
     public static func defaultHelpRequestIdentifier(_ args: [String]) -> Bool {

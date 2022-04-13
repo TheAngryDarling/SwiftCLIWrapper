@@ -8,6 +8,7 @@
 import Foundation
 import Dispatch
 import RegEx
+import SynchronizeObjects
 
 /// Class representing a CLI Group Command that has sub commands
 public class CLICommandGroup: CLICommand, CLICommandCollection {
@@ -45,9 +46,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                                          withMessage: message)
                 case .passthrough:
                     if let msg = message {
-                        parent.outputQueue.sync {
-                            print(msg)
-                        }
+                        parent.cli.print(msg)
                     }
                 
                     var ret = try parent.cli.help.executeAndWait(arguments: arguments,
@@ -69,7 +68,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
     
     private enum ParentOrRootStorage {
         case parent(CLICommandGroup)
-        case root(cli: CLIWrapper.CLIInterface,
+        case root(cli: CLIWrapper.CLInterface,
                   helpRequestIdentifier: CLIWrapper.HelpArgumentIdentifier)
         
         public var parent: CLICommandGroup? {
@@ -79,7 +78,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
             return ret
         }
         
-        public var cli: CLIWrapper.CLIInterface {
+        public var cli: CLIWrapper.CLInterface {
             switch self {
                 case .parent(let p):
                     return p.storage.cli
@@ -119,12 +118,12 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
         return self.storage.parent?.rootGroup ?? self
     }
 
-    /// The DispatchQueue used when outputing anything to the console
-    public var outputQueue: DispatchQueue {
-        return self.storage.cli.outputQueue
+    /// The Lockable used when outputing anything to the console
+    public var outputLock: Lockable {
+        return self.storage.cli.outputLock
     }
     /// The closure used to create a new CLI Process
-    public var cli: CLIWrapper.CLIInterface {
+    public var cli: CLIWrapper.CLInterface {
         return self.storage.cli
     }
     
@@ -143,7 +142,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
     internal init(regEx: RegEx,
                   helpAction: HelpAction = .passthrough,
                   defaultAction: CLIAction?,
-                  cli: CLIWrapper.CLIInterface,
+                  cli: CLIWrapper.CLInterface,
                   helpRequestIdentifier: @escaping CLIWrapper.HelpArgumentIdentifier) {
         
         // If we are a root group and the help is use parent then we'll switch to passthrough
@@ -184,7 +183,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                   caseSensitive: Bool = false,
                   helpAction: HelpAction = .passthrough,
                   defaultAction: CLIAction?,
-                  cli: CLIWrapper.CLIInterface,
+                  cli: CLIWrapper.CLInterface,
                   helpRequestIdentifier: @escaping CLIWrapper.HelpArgumentIdentifier) {
         
         // If we are a root group and the help is use parent then we'll switch to passthrough

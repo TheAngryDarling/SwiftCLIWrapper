@@ -15,7 +15,9 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/TheAngryDarling/SwiftCLICapture.git",
-                 from: "1.0.4"),
+                 from: "2.0.0"),
+        .package(url: "https://github.com/TheAngryDarling/SwiftSynchronizeObjects.git",
+                 from: "1.0.1"),
         .package(url: "https://github.com/TheAngryDarling/SwiftRegEx.git",
                  from: "1.1.0")
     ],
@@ -25,6 +27,7 @@ let package = Package(
         .target(
             name: "CLIWrapper",
             dependencies: ["CLICapture",
+                           "SynchronizeObjects",
                           "RegEx"]),
         .testTarget(
             name: "CLIWrapperTests",
