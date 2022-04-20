@@ -8,6 +8,7 @@
 import Foundation
 import Dispatch
 import RegEx
+import CLICapture
 import SynchronizeObjects
 
 /// Class representing a CLI Group Command that has sub commands
@@ -102,6 +103,8 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
    
     /// Storage for root group or reference to parent group
     private let storage: ParentOrRootStorage
+    // Indicator if unidentified arguments are allowed before commands for matching purposes
+    private let supportPreCommandArguments: Bool
    
     
     /// An array of sub commands
@@ -135,11 +138,13 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
     /// Create new CLI Command
     /// - Parameters:
     ///   - regEx: The regular expression to match the command argument to
+    ///   - supportPreCommandArguments: Indicator if unidentified arguments are allowed before commands for matching purposes
     ///   - helpAction: Handler to handle help parameters
     ///   - defaultAction: The action to execute
     ///   - cli: The CLI Interace to call CLI Commands
     ///   - helpRequestIdentifier: Closure used to identify if help handler should be called
     internal init(regEx: RegEx,
+                  supportPreCommandArguments: Bool,
                   helpAction: HelpAction = .passthrough,
                   defaultAction: CLIAction?,
                   cli: CLIWrapper.CLInterface,
@@ -151,6 +156,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
         
         self.storage = .root(cli: cli,
                              helpRequestIdentifier: helpRequestIdentifier)
+        self.supportPreCommandArguments = supportPreCommandArguments
         self.helpAction = hA
         super.init(regEx: regEx, action: defaultAction)
     }
@@ -158,14 +164,17 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
     /// Create new CLI Command
     /// - Parameters:
     ///   - regEx: The regular expression to match the command argument to
+    ///   - supportPreCommandArguments: Indicator if unidentified arguments are allowed before commands for matching purposes
     ///   - helpAction: Handler to handle help parameters
     ///   - action: The action to execute
     ///   - parent: Parent group of this group
     internal init(regEx: RegEx,
+                  supportPreCommandArguments: Bool,
                   helpAction: HelpAction = .useParentAction,
                   defaultAction: CLIAction?,
                   parent: CLICommandGroup) {
         self.storage = .parent(parent)
+        self.supportPreCommandArguments = supportPreCommandArguments
         self.helpAction = helpAction
         super.init(regEx: regEx,
                    action: defaultAction)
@@ -175,12 +184,14 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
     /// - Parameters:
     ///   - command: The string value of the command to match
     ///   - caseSensative: Indicator if the command is case sensative
+    ///   - supportPreCommandArguments: Indicator if unidentified arguments are allowed before commands for matching purposes
     ///   - helpAction: Handler to handle help parameters
     ///   - defaultAction: The action to execute
     ///   - cli: The CLI Interace to call CLI Commands
     ///   - helpRequestIdentifier: Closure used to identify if help handler should be called
     internal init(command: String,
                   caseSensitive: Bool = false,
+                  supportPreCommandArguments: Bool,
                   helpAction: HelpAction = .passthrough,
                   defaultAction: CLIAction?,
                   cli: CLIWrapper.CLInterface,
@@ -192,6 +203,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
         
         self.storage = .root(cli: cli,
                              helpRequestIdentifier: helpRequestIdentifier)
+        self.supportPreCommandArguments = supportPreCommandArguments
         self.helpAction = hA
         super.init(command: command,
                    caseSensitive: caseSensitive,
@@ -202,15 +214,18 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
     /// - Parameters:
     ///   - command: The string value of the command to match
     ///   - caseSensative: Indicator if the command is case sensative
+    ///   - supportPreCommandArguments: Indicator if unidentified arguments are allowed before commands for matching purposes
     ///   - helpAction: Handler to handle help parameters
     ///   - defaultAction: The action to execute
     ///   - parent: Parent group of this group
     internal init(command: String,
                   caseSensitive: Bool = false,
+                  supportPreCommandArguments: Bool,
                   helpAction: HelpAction = .useParentAction,
                   defaultAction: CLIAction?,
                   parent: CLICommandGroup) {
         self.storage = .parent(parent)
+        self.supportPreCommandArguments = supportPreCommandArguments
         self.helpAction = helpAction
         super.init(command: command,
                    caseSensitive: caseSensitive,
@@ -230,14 +245,39 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                             environment: [String: String]? = nil,
                                             currentDirectory: URL? = nil,
                                             standardInput: Any? = nil) throws -> Int32? {
+        func getCommand(arguments: [String],
+                        argumentStartingAt: Int) -> (cmd: CLICommand, startingAt: Int)? {
+            guard self.supportPreCommandArguments else {
+                guard let rtn = self.commands.first(where: { return $0.command.matches(arguments[argumentStartingAt]) }) else {
+                    return nil
+                }
+                
+                return (cmd: rtn, startingAt: argumentStartingAt)
+            }
+            
+            for i in argumentStartingAt..<arguments.count {
+                // if we find the help argument BEFORE we find any
+                // commands then we stop looking
+                if i > argumentStartingAt &&
+                   self.rootGroup.helpRequestIdentifier([arguments[i-1]]) {
+                    return nil
+                }
+                if let rtn = self.commands.first(where: { return $0.command.matches(arguments[i]) }) {
+                    return (cmd: rtn, startingAt: i)
+                }
+            }
+            
+            return nil
+        }
         if arguments.count > argumentStartingAt,
-           let command = self.commands.first(where: { return $0.command.matches(arguments[argumentStartingAt]) }) {
-            return try command.executeIfWrapped(parent: self,
-                                                argumentStartingAt: argumentStartingAt + 1,
-                                                arguments: arguments,
-                                                environment: environment,
-                                                currentDirectory: currentDirectory,
-                                                standardInput: standardInput)
+           let commandDetails = getCommand(arguments: arguments,
+                                           argumentStartingAt: argumentStartingAt) {
+            return try commandDetails.cmd.executeIfWrapped(parent: self,
+                                                           argumentStartingAt: commandDetails.startingAt + 1,
+                                                           arguments: arguments,
+                                                           environment: environment,
+                                                           currentDirectory: currentDirectory,
+                                                           standardInput: standardInput)
         } else if self.rootGroup.helpRequestIdentifier(arguments) {
             return try self.helpAction.execute(parent: self,
                                                argumentStartingAt: argumentStartingAt,
@@ -371,6 +411,7 @@ public extension CLICommandGroup {
                             defaultAction: CLIAction? = nil) -> CLICommandGroup {
         let cmd = CLICommandGroup(command: command,
                                   caseSensitive: caseSensitive,
+                                  supportPreCommandArguments: self.supportPreCommandArguments,
                                   helpAction: helpAction,
                                   defaultAction: defaultAction,
                                   parent: self)
@@ -388,6 +429,7 @@ public extension CLICommandGroup {
                             helpAction: CLICommandGroup.HelpAction = .passthrough,
                             defaultAction: CLIAction? = nil) -> CLICommandGroup {
         let cmd = CLICommandGroup(regEx: regEx,
+                                  supportPreCommandArguments: self.supportPreCommandArguments,
                                   helpAction: helpAction,
                                   defaultAction: defaultAction,
                                   parent: self)

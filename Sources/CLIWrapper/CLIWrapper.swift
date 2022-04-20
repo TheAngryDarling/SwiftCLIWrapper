@@ -104,12 +104,14 @@ open class CLIWrapper: CLICommandCollection {
     /// Create a new CLIWrapper
     /// - Parameters:
     ///   - outputLock: The object used to synchronized output calls
+    ///   - supportPreCommandArguments: Indicator if unidentified arguments are allowed before commands for matching purposes
     ///   - helpRequestIdentifier: Closure used to identify if help handler should be called
     ///   - helpAction: The help handler to execute
     ///   - outputCapturing: The capturing option to capture data being directed to the output
     ///   - createCLIProcess: The closure used to create the cli process
     ///   - createCLIHelpProcess: The closure used to create the cli Help process
     public init(outputLock: Lockable = NSLock(),
+                supportPreCommandArguments: Bool = false,
                 helpRequestIdentifier: @escaping HelpArgumentIdentifier = CLIWrapper.defaultHelpRequestIdentifier,
                 helpAction: HelpAction = .passthrough,
                 outputCapturing: STDOutputCapturing? = nil,
@@ -118,6 +120,7 @@ open class CLIWrapper: CLICommandCollection {
         
         
         self.rootGroup = .init(command: "",
+                               supportPreCommandArguments: supportPreCommandArguments,
                                helpAction: helpAction.groupHelpAction,
                                defaultAction: nil,
                                cli: .init(outputLock: outputLock,
@@ -130,12 +133,14 @@ open class CLIWrapper: CLICommandCollection {
     /// Create a new CLIWrapper
     /// - Parameters:
     ///   - outputLock: The object used to synchronized output calls
+    ///   - supportPreCommandArguments: Indicator if unidentified arguments are allowed before commands for matching purposes
     ///   - helpArguments: An array of arguments that can be used to call the help screen
     ///   - helpAction: The help handler to execute
     ///   - outputCapturing: The capturing option to capture data being directed to the output
     ///   - createCLIProcess: The closure used to create the cli process
     ///   - createCLIHelpProcess: The closure used to create the cli Help process
     public init(outputLock: Lockable = NSLock(),
+                supportPreCommandArguments: Bool = false,
                 helpArguments: [String],
                 helpAction: HelpAction = .passthrough,
                 outputCapturing: STDOutputCapturing? = nil,
@@ -164,6 +169,7 @@ open class CLIWrapper: CLICommandCollection {
         }
         
         self.rootGroup = .init(command: "",
+                               supportPreCommandArguments: supportPreCommandArguments,
                                helpAction: helpAction.groupHelpAction,
                                defaultAction: nil,
                                cli: .init(outputLock: outputLock,
@@ -177,12 +183,14 @@ open class CLIWrapper: CLICommandCollection {
     /// Create a new CLIWrapper
     /// - Parameters:
     ///   - outputLock: The object used to synchronized output calls
+    ///   - supportPreCommandArguments: Indicator if unidentified arguments are allowed before commands for matching purposes
     ///   - helpArguments: An array of arguments that can be used to call the help screen
     ///   - helpAction: The help handler to execute
     ///   - outputCapturing: The capturing option to capture data being directed to the output
     ///   - createCLIProcess: The closure used to create the cli process
     ///   - executable: The URL to the executable
     public init(outputLock: Lockable = NSLock(),
+                supportPreCommandArguments: Bool = false,
                 helpArguments: [String],
                 helpAction: HelpAction = .passthrough,
                 outputCapturing: STDOutputCapturing? = nil,
@@ -233,6 +241,7 @@ open class CLIWrapper: CLICommandCollection {
         }
         
         self.rootGroup = .init(command: "",
+                               supportPreCommandArguments: supportPreCommandArguments,
                                helpAction: helpAction.groupHelpAction,
                                defaultAction: nil,
                                cli: .init(outputLock: outputLock,
@@ -347,3 +356,5 @@ public extension CLIWrapper {
                                               withMessage: message)
     }
 }
+
+

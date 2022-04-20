@@ -6,7 +6,8 @@ class CLIWrapperTests: XCTestCase {
     
     let buffer = CLICapture.STDOutputBuffer()
     
-    lazy var wrapper = CLIWrapper.init(helpArguments: ["-h"],
+    lazy var wrapper = CLIWrapper.init(supportPreCommandArguments: true,
+                                       helpArguments: ["-h"],
                                        outputCapturing: .capture(using: buffer),
                                        executable: URL(fileURLWithPath: "/usr/bin/swift"))
     
@@ -143,6 +144,20 @@ class CLIWrapperTests: XCTestCase {
         } catch {
             XCTFail("\(error)")
         }
+        
+        do {
+            let ret = try wrapper.execute(["-Xswiftc", "-DTEST_FLAG", "build"])
+            XCTAssertEqual(ret, 0)
+            guard let str = String(data: buffer.readBuffer(emptyAll: true),
+                                   encoding: .utf8) else {
+                XCTFail("Unable to read output as string")
+                return
+            }
+            XCTAssertEqual(str.trimmingCharacters(in: .whitespacesAndNewlines),
+                           "Replacement Build Command")
+        } catch {
+            XCTFail("\(error)")
+        }
     }
     func testPreAction() {
         do {
@@ -177,6 +192,20 @@ class CLIWrapperTests: XCTestCase {
         } catch {
             XCTFail("\(error)")
         }
+        
+        do {
+            try wrapper.execute(["-Xswiftc", "-DTEST_FLAG", "package"])
+            //XCTAssertEqual(ret, 0)
+            guard let str = String(data: buffer.readBuffer(emptyAll: true),
+                                   encoding: .utf8) else {
+                XCTFail("Unable to read output as string")
+                return
+            }
+            XCTAssertTrue(str.contains("package post response"),
+                          "Could not find PreCLI string 'package post response' in '\(str)'")
+        } catch {
+            XCTFail("\(error)")
+        }
     }
     
     public func testWrappedAction() {
@@ -196,6 +225,71 @@ class CLIWrapperTests: XCTestCase {
         } catch {
             XCTFail("\(error)")
         }
+        
+        do {
+            try wrapper.execute(["-Xswiftc", "-DTEST_FLAG", "run"])
+            //XCTAssertEqual(ret, 0)
+            guard let str = String(data: buffer.readBuffer(emptyAll: true),
+                                   encoding: .utf8) else {
+                XCTFail("Unable to read output as string")
+                return
+            }
+            XCTAssertTrue(str.contains("PreWrapped Command"),
+                          "Could not find PreCLI string 'PreWrapped Command' in '\(str)'")
+            XCTAssertTrue(str.contains("PostWrapped Command"),
+                          "Could not find PostCLI string 'PostWrapped Command' in '\(str)'")
+        } catch {
+            XCTFail("\(error)")
+        }
+    }
+    
+    func testHelp() {
+        do {
+            try wrapper.execute(["-h"])
+            //XCTAssertEqual(ret, 0)
+            guard let str = String(data: buffer.readBuffer(emptyAll: true),
+                                   encoding: .utf8) else {
+                XCTFail("Unable to read output as string")
+                return
+            }
+            XCTAssertTrue(str.contains("USAGE: swift\n") || str.contains("USAGE: swift [options]"),
+                          "Could not find Swift Usage Line in:\n'\(str)'")
+        
+        } catch {
+            XCTFail("\(error)")
+        }
+        
+        do {
+            try wrapper.execute(["-h", "package"])
+            //XCTAssertEqual(ret, 0)
+            guard let str = String(data: buffer.readBuffer(emptyAll: true),
+                                   encoding: .utf8)?.replacingOccurrences(of: "\r\n", with: "\n") else {
+                XCTFail("Unable to read output as string")
+                return
+            }
+            //print(str)
+            XCTAssertTrue(str.contains("USAGE: swift\n") || str.contains("USAGE: swift [options]"),
+                          "Could not find Swift Usage Line in:\n'\(str)'")
+        
+        } catch {
+            XCTFail("\(error)")
+        }
+        
+        do {
+            try wrapper.execute(["package", "-h"])
+            //XCTAssertEqual(ret, 0)
+            guard let str = String(data: buffer.readBuffer(emptyAll: true),
+                                   encoding: .utf8) else {
+                XCTFail("Unable to read output as string")
+                return
+            }
+            //print(str)
+            XCTAssertTrue(str.contains("USAGE: swift package"),
+                          "Could not find Swift Package Usage Line")
+        
+        } catch {
+            XCTFail("\(error)")
+        }
     }
 
 
@@ -205,5 +299,6 @@ class CLIWrapperTests: XCTestCase {
         ("testPreAction", testPreAction),
         ("testPostAction", testPostAction),
         ("testWrappedAction", testWrappedAction),
+        ("testHelp", testHelp)
     ]
 }
