@@ -46,25 +46,6 @@ public typealias CLIPostActionCapturedNoStorageHandler<Captured> = (_ parent: CL
                                                                     _ captured: Captured) throws -> Int32
 where Captured: CLICapturedResponse
 
-internal func cliPostActionCapuredNoStorageToStorage<Captured>(_ handler: @escaping CLIPostActionCapturedNoStorageHandler<Captured>) -> CLIPostActionCapturedHandler<Void, Captured> where Captured: CLICapturedResponse {
-    return { (parent: CLICommandGroup,
-              argumentStartingAt: Int,
-              arguments: [String],
-              environment: [String: String]?,
-              currentDirectory: URL?,
-              storage: Void?,
-              captured: Captured) throws -> Int32 in
-        
-        return try handler(parent,
-                           argumentStartingAt,
-                           arguments,
-                           environment,
-                           currentDirectory,
-                           captured)
-        
-    }
-}
-
 /// Defining a post action that capture responses from the CLI execution
 public protocol CLIPostActionCaptured: CLIPostAction, CLIAction {
     associatedtype Captured: CLICapturedResponse

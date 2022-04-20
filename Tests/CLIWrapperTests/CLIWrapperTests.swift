@@ -52,6 +52,21 @@ class CLIWrapperTests: XCTestCase {
             return 0
         }
         
+        
+        _ = wrapper.createCommandGroupWithCustomAction(command: "test",
+                                                   caseSensitive: false,
+                                                   helpAction: .passthrough) {
+            (_ parent: CLICommandGroup,
+             _ argumentStartingAt: Int,
+             _ arguments: [String],
+             _ environment: [String: String]?,
+             _ currentDirectory: URL?,
+             _ standardInput: Any?) throws -> Int32 in
+            
+            parent.cli.print("Testing default action")
+            return 0
+        }
+        
         // postCLI command
         wrapper.createPostCLICommand(command: "package",
                                      continueOnCLIFailure: true,
@@ -286,6 +301,22 @@ class CLIWrapperTests: XCTestCase {
             //print(str)
             XCTAssertTrue(str.contains("USAGE: swift package"),
                           "Could not find Swift Package Usage Line")
+        
+        } catch {
+            XCTFail("\(error)")
+        }
+        
+        do {
+            try wrapper.execute(["test", "-h"])
+            //XCTAssertEqual(ret, 0)
+            guard let str = String(data: buffer.readBuffer(emptyAll: true),
+                                   encoding: .utf8) else {
+                XCTFail("Unable to read output as string")
+                return
+            }
+            //print(str)
+            XCTAssertTrue(str.contains("USAGE: swift test"),
+                          "Could not find Swift Test Usage Line")
         
         } catch {
             XCTFail("\(error)")

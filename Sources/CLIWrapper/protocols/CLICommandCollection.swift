@@ -13,8 +13,60 @@ import CLICapture
 public protocol CLICommandCollection {
     /// Add sub command to the given object
     func addCommand(_ command: CLICommand)
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - command: The command to handle
+    ///   - caseSensative: Indicator if the command is case sensative
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultAction: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroup(command: String,
+                            caseSensitive: Bool,
+                            helpAction: CLICommandGroup.HelpAction,
+                            defaultAction: CLIAction?) -> CLICommandGroup
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - regEx: The regular expression to match the command argument to
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultAction: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroup(regEx: RegEx,
+                            helpAction: CLICommandGroup.HelpAction,
+                            defaultAction: CLIAction?) -> CLICommandGroup
+    
 }
-
+    
+public extension CLICommandCollection {
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - command: The command to handle
+    ///   - caseSensative: Indicator if the command is case sensative
+    ///   - helpAction: Handler to handle help parameters
+    /// - Returns: Returns the newly created command group
+    func createCommandGroup(command: String,
+                            caseSensitive: Bool = true,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough) -> CLICommandGroup {
+        return self.createCommandGroup(command: command,
+                                       caseSensitive: caseSensitive,
+                                       helpAction: helpAction,
+                                       defaultAction: nil)
+    }
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - regEx: The regular expression to match the command argument to
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultAction: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroup(regEx: RegEx,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough) -> CLICommandGroup {
+        return self.createCommandGroup(regEx: regEx,
+                                       helpAction: helpAction,
+                                       defaultAction: nil)
+    }
+}
 
 // MARK: Create Basic Command
 public extension CLICommandCollection {
@@ -160,12 +212,12 @@ public extension CLICommandCollection {
                               passthroughOptions: CLIPassthroughOptions,
                               actionHandler: @escaping CLIPostActionNoCaptureNoStorageHandler) -> CLICommand {
         
-        return self.createPostCLICommand(command: command,
-                                         caseSensitive: caseSensitive,
-                                         continueOnCLIFailure: continueOnCLIFailure,
-                                         outputOptions: CLIOutputOptions.none + passthroughOptions,
-                                         outputEventHandler: CLIPostActionOutputEventHandler<Void>.none,
-                                         actionHandler: cliPostActionNoCapureNoStorageToStorage(actionHandler))
+        let action = CLIBasicPostActionNoCapture<Void>.init(continueOnCLIFailure: continueOnCLIFailure,
+                                               passthroughOptions: passthroughOptions,
+                                               handler: actionHandler)
+        return self.createCommand(command: command,
+                                  caseSensitive: caseSensitive,
+                                  action: action)
     }
     
     /// Create a new command
@@ -182,7 +234,7 @@ public extension CLICommandCollection {
                                        outputOptions: CLIOutputOptions = .all,
                                        outputEventHandler: CLIPostActionOutputEventHandler<Storage>,
                                        actionHandler: @escaping CLIPostActionNoCaptureHandler<Storage>) -> CLICommand {
-        let action = CLIBasicPostActionNoCapture(continueOnCLIFailure: continueOnCLIFailure,
+        let action = CLIBasicPostActionNoCapture<Storage>(continueOnCLIFailure: continueOnCLIFailure,
                                                 outputOptions: outputOptions,
                                                 outputEventHandler: outputEventHandler,
                                                 handler: actionHandler)
@@ -203,11 +255,11 @@ public extension CLICommandCollection {
                               continueOnCLIFailure: Bool = false,
                               passthroughOptions: CLIPassthroughOptions,
                               actionHandler: @escaping CLIPostActionNoCaptureNoStorageHandler) -> CLICommand {
-        return self.createPostCLICommand(regEx: regEx,
-                                         continueOnCLIFailure: continueOnCLIFailure,
-                                         outputOptions: CLIOutputOptions.none + passthroughOptions,
-                                         outputEventHandler: CLIPostActionOutputEventHandler<Void>.none,
-                                         actionHandler: cliPostActionNoCapureNoStorageToStorage(actionHandler))
+        let action = CLIBasicPostActionNoCapture<Void>.init(continueOnCLIFailure: continueOnCLIFailure,
+                                                            passthroughOptions: passthroughOptions,
+                                                           handler: actionHandler)
+        return self.createCommand(regEx: regEx,
+                                  action: action)
     }
     
 }
@@ -257,12 +309,13 @@ public extension CLICommandCollection {
                                         actionHandler: @escaping CLIPostActionCapturedNoStorageHandler<Captured>) -> CLICommand
     where Captured: CLICapturedResponse {
         
-        return self.createPostCLICommand(command: command,
-                                         caseSensitive: caseSensitive,
-                                         continueOnCLIFailure: continueOnCLIFailure,
-                                         outputOptions: CLIOutputOptions.none + passthroughOptions,
-                                         outputEventHandler: CLIPostActionOutputEventHandler<Void>.none,
-                                         actionHandler: cliPostActionCapuredNoStorageToStorage(actionHandler))
+        let action = CLIBasicPostActionCaptured<Void, Captured>.init(continueOnCLIFailure: continueOnCLIFailure,
+                                                           passthroughOptions: passthroughOptions,
+                                                           handler: actionHandler)
+        
+        return self.createCommand(command: command,
+                                  caseSensitive: caseSensitive,
+                                  action: action)
     }
     
     /// Create a new command
@@ -302,11 +355,11 @@ public extension CLICommandCollection {
                                         passthroughOptions: CLIPassthroughOptions,
                                         actionHandler: @escaping CLIPostActionCapturedNoStorageHandler<Captured>) -> CLICommand
     where Captured: CLICapturedResponse {
-        return self.createPostCLICommand(regEx: regEx,
-                                         continueOnCLIFailure: continueOnCLIFailure,
-                                         outputOptions: CLIOutputOptions.none + passthroughOptions,
-                                         outputEventHandler: CLIPostActionOutputEventHandler<Void>.none,
-                                         actionHandler: cliPostActionCapuredNoStorageToStorage(actionHandler))
+        let action = CLIBasicPostActionCaptured<Void, Captured>.init(continueOnCLIFailure: continueOnCLIFailure,
+                                                                     passthroughOptions: passthroughOptions,
+                                                                     handler: actionHandler)
+        return self.createCommand(regEx: regEx,
+                                 action: action)
     }
     
 }
@@ -601,4 +654,206 @@ public extension CLICommandCollection {
                                          preActionHandler: preActionHandler,
                                          postActionHandler: postActionHandler)
     }
+}
+
+// MARK: Create Command group with Custom Default Action
+public extension CLICommandCollection {
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - command: The command to handle
+    ///   - caseSensative: Indicator if the command is case sensative
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithCustomAction(command: String,
+                                            caseSensitive: Bool = true,
+                                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                                            defaultHandler: @escaping CLIActionHandler) -> CLICommandGroup {
+        let action = CLIBasicAction(defaultHandler)
+        return self.createCommandGroup(command: command,
+                                       caseSensitive: caseSensitive,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+        
+    }
+    
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - regEx: The regular expression to match the command argument to
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithCustomAction(regEx: RegEx,
+                                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                                            defaultHandler: @escaping CLIActionHandler) -> CLICommandGroup {
+        
+        let action = CLIBasicAction(defaultHandler)
+        return self.createCommandGroup(regEx: regEx,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+    }
+}
+
+// MARK: Create Command group with Pre CLI Default Action
+public extension CLICommandCollection {
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - command: The command to handle
+    ///   - caseSensative: Indicator if the command is case sensative
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultContinueOnPreActionFailure: Indicator if execution of cli should occur if pre action returns failure code
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithPreCLIAction(command: String,
+                            caseSensitive: Bool = true,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                            defaultContinueOnPreActionFailure: Bool = false,
+                                            defaultHandler: @escaping CLIPreActionHandler) -> CLICommandGroup {
+        let action = CLIBasicPreAction(continueOnPreActionFailure:
+                                        defaultContinueOnPreActionFailure,
+                                       handler: defaultHandler)
+        return self.createCommandGroup(command: command,
+                                       caseSensitive: caseSensitive,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+        
+    }
+    
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - regEx: The regular expression to match the command argument to
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultContinueOnPreActionFailure: Indicator if execution of cli should occur if pre action returns failure code
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithPreCLIAction(regEx: RegEx,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                            defaultContinueOnPreActionFailure: Bool = false,
+                                            defaultHandler: @escaping CLIPreActionHandler) -> CLICommandGroup {
+        
+        let action = CLIBasicPreAction(continueOnPreActionFailure:
+                                        defaultContinueOnPreActionFailure,
+                                       handler: defaultHandler)
+        return self.createCommandGroup(regEx: regEx,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+    }
+}
+    
+// MARK: Create Command group with Post CLI Capture Action
+public extension CLICommandCollection {
+    
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - command: The command to handle
+    ///   - caseSensative: Indicator if the command is case sensative
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultContinueOnCLIFailure: Indicator if the action should continue if executing the cli process reutrns a failure
+    ///   - defaultOutputOptions: Options on what to pass to the console from the cli process
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithPostCLICaptured<Captured>(command: String,
+                            caseSensitive: Bool = true,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                            defaultContinueOnCLIFailure: Bool = false,
+                            defaultOutputOptions: CLIOutputOptions,
+                                                defaultHandler: @escaping CLIPostActionCapturedNoStorageHandler<Captured>) -> CLICommandGroup
+    where Captured: CLICapturedResponse {
+        
+        let action = CLIBasicPostActionCaptured<Void, Captured>(continueOnCLIFailure: defaultContinueOnCLIFailure,
+                                                 outputOptions: defaultOutputOptions,
+                                                 handler: defaultHandler)
+        return self.createCommandGroup(command: command,
+                                       caseSensitive: caseSensitive,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+        
+    }
+    
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - regEx: The regular expression to match the command argument to
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultContinueOnCLIFailure: Indicator if the action should continue if executing the cli process reutrns a failure
+    ///   - defaultOutputOptions: Options on what to pass to the console from the cli process
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithPostCLICaptured<Captured>(regEx: RegEx,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                            defaultContinueOnCLIFailure: Bool = false,
+                                               defaultOutputOptions: CLIOutputOptions,
+                                                defaultHandler: @escaping CLIPostActionCapturedNoStorageHandler<Captured>) -> CLICommandGroup
+    where Captured: CLICapturedResponse {
+        
+        let action = CLIBasicPostActionCaptured<Void, Captured>(continueOnCLIFailure: defaultContinueOnCLIFailure,
+                                                 outputOptions: defaultOutputOptions,
+                                                 handler: defaultHandler)
+        
+        return self.createCommandGroup(regEx: regEx,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+    }
+    
+}
+
+// MARK: Create Command group with Post CLI Action
+public extension CLICommandCollection {
+    
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - command: The command to handle
+    ///   - caseSensative: Indicator if the command is case sensative
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultContinueOnCLIFailure: Indicator if the action should continue if executing the cli process reutrns a failure
+    ///   - defaultPassthroughOptions: Options on what to pass to the console from the cli process
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithPostCLI(command: String,
+                            caseSensitive: Bool = true,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                            defaultContinueOnCLIFailure: Bool = false,
+                            defaultPassthroughOptions: CLIPassthroughOptions,
+                                                defaultHandler: @escaping CLIPostActionNoCaptureNoStorageHandler) -> CLICommandGroup {
+        
+        let action = CLIBasicPostActionNoCapture<Void>(continueOnCLIFailure: defaultContinueOnCLIFailure,
+                                                 passthroughOptions: defaultPassthroughOptions,
+                                                 handler: defaultHandler)
+        return self.createCommandGroup(command: command,
+                                       caseSensitive: caseSensitive,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+        
+    }
+    
+    
+    /// Create a new Group Command
+    /// - Parameters:
+    ///   - regEx: The regular expression to match the command argument to
+    ///   - helpAction: Handler to handle help parameters
+    ///   - defaultContinueOnCLIFailure: Indicator if the action should continue if executing the cli process reutrns a failure
+    ///   - defaultPassthroughOptions: Options on what to pass to the console from the cli process
+    ///   - defaultHandler: The default action to execute if no sub command is found
+    /// - Returns: Returns the newly created command group
+    func createCommandGroupWithPostCLI(regEx: RegEx,
+                            helpAction: CLICommandGroup.HelpAction = .passthrough,
+                            defaultContinueOnCLIFailure: Bool = false,
+                            defaultPassthroughOptions: CLIPassthroughOptions,
+                                                defaultHandler: @escaping CLIPostActionNoCaptureNoStorageHandler) -> CLICommandGroup {
+        
+        let action = CLIBasicPostActionNoCapture<Void>(continueOnCLIFailure: defaultContinueOnCLIFailure,
+                                                 passthroughOptions: defaultPassthroughOptions,
+                                                 handler: defaultHandler)
+        
+        return self.createCommandGroup(regEx: regEx,
+                                       helpAction: helpAction,
+                                       defaultAction: action)
+    }
+    
 }

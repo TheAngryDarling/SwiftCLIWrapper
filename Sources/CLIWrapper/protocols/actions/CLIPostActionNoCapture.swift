@@ -42,25 +42,6 @@ public typealias CLIPostActionNoCaptureNoStorageHandler = (_ parent: CLICommandG
                                                            _ currentDirectory: URL?,
                                                            _ exitStatusCode: Int32) throws -> Int32
 
-internal func cliPostActionNoCapureNoStorageToStorage(_ handler: @escaping CLIPostActionNoCaptureNoStorageHandler) -> CLIPostActionNoCaptureHandler<Void> {
-    return { (parent: CLICommandGroup,
-              argumentStartingAt: Int,
-              arguments: [String],
-              environment: [String: String]?,
-              currentDirectory: URL?,
-              storage: Void?,
-              exitStatusCode: Int32) throws -> Int32 in
-        
-        return try handler(parent,
-                           argumentStartingAt,
-                           arguments,
-                           environment,
-                           currentDirectory,
-                           exitStatusCode)
-        
-    }
-}
-
 /// Defining a post action that does not capture  CLI outputs
 public protocol CLIPostActionNoCapture: CLIPostAction, CLIAction {
     

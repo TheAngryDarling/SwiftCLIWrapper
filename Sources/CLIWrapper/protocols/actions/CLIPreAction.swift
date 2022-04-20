@@ -16,7 +16,6 @@ import Foundation
 ///   - currentDirectory: Set the current working directory
 ///   - standardInput: The standard input to set the cli sub process if called
 /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
-
 public typealias CLIPreActionHandler = (_ parent: CLICommandGroup,
                                         _ argumentStartingAt: Int,
                                         _ arguments: inout [String],
