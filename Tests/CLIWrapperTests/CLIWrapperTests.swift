@@ -322,6 +322,11 @@ class CLIWrapperTests: XCTestCase {
             XCTFail("\(error)")
         }
     }
+    
+    func testLockableReference() {
+        // Just making sure we can reference Lockable without importing SynchronizeObjects
+        let _: Lockable = NSLock()
+    }
 
 
     static var allTests = [
@@ -330,6 +335,7 @@ class CLIWrapperTests: XCTestCase {
         ("testPreAction", testPreAction),
         ("testPostAction", testPostAction),
         ("testWrappedAction", testWrappedAction),
-        ("testHelp", testHelp)
+        ("testHelp", testHelp),
+        ("testLockableReference", testLockableReference)
     ]
 }

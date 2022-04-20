@@ -9,7 +9,6 @@ import Foundation
 import Dispatch
 import RegEx
 import CLICapture
-import SynchronizeObjects
 
 /// Class representing the CLI Command
 open class CLIWrapper: CLICommandCollection {

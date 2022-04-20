@@ -9,7 +9,6 @@ import Foundation
 import Dispatch
 import RegEx
 import CLICapture
-import SynchronizeObjects
 
 /// Class representing a CLI Group Command that has sub commands
 public class CLICommandGroup: CLICommand, CLICommandCollection {
