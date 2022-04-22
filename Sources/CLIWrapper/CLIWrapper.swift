@@ -42,15 +42,23 @@ open class CLIWrapper: CLICommandCollection {
             self.helpProcessBuffer = helpProcessBuffer
         }
         
+        /// Capture both process buffer and help buffer to the same buffer
         public static func capture(using buffer: CLICapture.STDOutputBuffer) -> STDOutputCapturing {
             return .init(processBuffer: buffer,
                          helpProcessBuffer: buffer)
         }
+        /// Capture process buffer and help buffer seperatley
         public static func capture(processBuffer: CLICapture.STDOutputBuffer,
-                                     helpProcessBuffer: CLICapture.STDOutputBuffer? = nil) -> STDOutputCapturing {
+                                     helpProcessBuffer: CLICapture.STDOutputBuffer) -> STDOutputCapturing {
             return .init(processBuffer: processBuffer,
                          helpProcessBuffer: helpProcessBuffer)
         }
+        /// Capture process buffer only
+        public static func capture(processBuffer: CLICapture.STDOutputBuffer) -> STDOutputCapturing {
+            return .init(processBuffer: processBuffer,
+                         helpProcessBuffer: nil)
+        }
+        /// Capture help buffer only
         public static func capture(helpProcessBuffer: CLICapture.STDOutputBuffer) -> STDOutputCapturing {
             return .init(processBuffer: nil,
                          helpProcessBuffer: helpProcessBuffer)
@@ -145,7 +153,7 @@ open class CLIWrapper: CLICommandCollection {
                 outputCapturing: STDOutputCapturing? = nil,
                 createCLIProcess: @escaping CreateProcess) {
         precondition(!helpArguments.isEmpty, "Must have atleast one help argument")
-        precondition(!helpArguments.contains(where: { return $0.trimmingCharacters(in: .whitespaces).isEmpty }), "Help argumetns can not be empty or whitespace")
+        precondition(!helpArguments.contains(where: { return $0.trimmingCharacters(in: .whitespaces).isEmpty }), "Help arguments can not be empty or whitespace")
         precondition(!helpArguments.contains(where: { return $0.contains(" ") }), "Help argumetns can not contain white spaces")
                      
         func helpRequestIdentifier(_ args: [String]) -> Bool {
