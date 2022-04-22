@@ -154,7 +154,7 @@ open class CLIWrapper: CLICommandCollection {
                 createCLIProcess: @escaping CreateProcess) {
         precondition(!helpArguments.isEmpty, "Must have atleast one help argument")
         precondition(!helpArguments.contains(where: { return $0.trimmingCharacters(in: .whitespaces).isEmpty }), "Help arguments can not be empty or whitespace")
-        precondition(!helpArguments.contains(where: { return $0.contains(" ") }), "Help argumetns can not contain white spaces")
+        precondition(!helpArguments.contains(where: { return $0.contains(" ") }), "Help arguments can not contain white spaces")
                      
         func helpRequestIdentifier(_ args: [String]) -> Bool {
             return args.contains {
