@@ -140,7 +140,6 @@ This includes pre, post, and wrapped CLI processing as well as replacing and add
 
 ## Dependencies
 
-* **[SwiftHelpfulProtocols](https://github.com/TheAngryDarling/SwiftHelpfulProtocols.git)** - Some helpful protocols used when dealing with generics
 * **[CLICapture](https://github.com/TheAngryDarling/SwiftCLICapture.git)** - Classes for capturing the output of a CLI application
 * **[RegEx](https://github.com/TheAngryDarling/SwiftRegEx.git)** - Swift friendly wrapper around NSRegularExpression
 

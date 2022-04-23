@@ -10,9 +10,6 @@ import Foundation
 import Dispatch
 import RegEx
 
-//import SwiftPatches
-//import HelpfulProtocols
-
 
 /// Class representing a basic CLI Command
 public class CLICommand {
