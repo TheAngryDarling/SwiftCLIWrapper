@@ -13,7 +13,7 @@ public extension Optional where Wrapped == CLIWrapper.STDOutputCapturing {
     static func capture(using buffer: CLICapture.STDOutputBuffer) -> CLIWrapper.STDOutputCapturing {
         return CLIWrapper.STDOutputCapturing.capture(using: buffer)
     }
-    /// Capture process buffer and help buffer seperatley
+    /// Capture process buffer and help buffer separately
     static func capture(processBuffer: CLICapture.STDOutputBuffer,
                         helpProcessBuffer: CLICapture.STDOutputBuffer) -> CLIWrapper.STDOutputCapturing {
         return CLIWrapper.STDOutputCapturing.capture(processBuffer: processBuffer,

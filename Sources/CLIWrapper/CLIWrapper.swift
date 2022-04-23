@@ -47,7 +47,7 @@ open class CLIWrapper: CLICommandCollection {
             return .init(processBuffer: buffer,
                          helpProcessBuffer: buffer)
         }
-        /// Capture process buffer and help buffer seperatley
+        /// Capture process buffer and help buffer separately
         public static func capture(processBuffer: CLICapture.STDOutputBuffer,
                                      helpProcessBuffer: CLICapture.STDOutputBuffer) -> STDOutputCapturing {
             return .init(processBuffer: processBuffer,
