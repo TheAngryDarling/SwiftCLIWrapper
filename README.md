@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/os-linux-green.svg?style=flat)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat)](LICENSE.md)
 
-Class and objects used to wrap a CLI application.  
+Classes and objects used to wrap a CLI application.  
 This includes pre, post, and wrapped CLI processing as well as replacing and adding new cli commands
 
 ## Requirements
