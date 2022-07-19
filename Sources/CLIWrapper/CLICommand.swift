@@ -9,6 +9,7 @@
 import Foundation
 import Dispatch
 import RegEx
+import struct CLICapture.CLIStackTrace
 
 
 /// Class representing a basic CLI Command
@@ -72,13 +73,17 @@ public class CLICommand {
                                    arguments: [String],
                                    environment: [String: String]? = nil,
                                    currentDirectory: URL? = nil,
-                                   standardInput: Any? = nil) throws -> Int32? {
+                                   standardInput: Any? = nil,
+                                   userInfo: [String: Any] = [:],
+                                   stackTrace: CLIStackTrace) throws -> Int32? {
         return try self.action?.execute(parent: parent,
                                         argumentStartingAt: argumentStartingAt,
                                         arguments: arguments,
                                         environment: environment,
                                         currentDirectory: currentDirectory,
-                                        standardInput: standardInput)
+                                        standardInput: standardInput,
+                                        userInfo: userInfo,
+                                        stackTrace: stackTrace.stacking())
     }
     
     /// Method used to execute the command action
@@ -95,17 +100,23 @@ public class CLICommand {
                           arguments: [String],
                           environment: [String: String]? = nil,
                           currentDirectory: URL? = nil,
-                          standardInput: Any? = nil) throws -> Int32 {
+                          standardInput: Any? = nil,
+                          userInfo: [String: Any] = [:],
+                          stackTrace: CLIStackTrace) throws -> Int32 {
         guard let ret = try self.executeIfWrapped(parent: parent,
                                                   argumentStartingAt: argumentStartingAt,
                                                   arguments: arguments,
                                                   environment: environment,
                                                   currentDirectory: currentDirectory,
-                                                  standardInput: standardInput) else {
+                                                  standardInput: standardInput,
+                                                  userInfo: userInfo,
+                                                  stackTrace: stackTrace.stacking()) else {
             return try parent.cli.executeAndWait(arguments: arguments,
                                                  environment: environment,
                                                  currentDirectory: currentDirectory,
-                                                 standardInput: standardInput)
+                                                 standardInput: standardInput,
+                                                 userInfo: userInfo,
+                                                 stackTrace: stackTrace.stacking())
         }
         return ret
     }

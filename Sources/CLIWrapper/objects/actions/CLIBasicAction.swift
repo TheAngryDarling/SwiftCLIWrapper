@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import struct CLICapture.CLIStackTrace
 
 /// Helper object used to create a basic CLIActon from just
 /// the handler function
@@ -21,12 +22,16 @@ public struct CLIBasicAction: CLIAction {
                         arguments: [String],
                         environment: [String: String]?,
                         currentDirectory: URL?,
-                        standardInput: Any?) throws -> Int32 {
+                        standardInput: Any?,
+                        userInfo: [String: Any],
+                        stackTrace: CLIStackTrace) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
                                 arguments,
                                 environment,
                                 currentDirectory,
-                                standardInput)
+                                standardInput,
+                                userInfo,
+                                stackTrace.stacking())
     }
 }

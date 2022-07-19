@@ -69,7 +69,9 @@ open class CLIWrapper: CLICommandCollection {
     public typealias CreateProcess = (_ arguments: [String],
                                       _ environment: [String: String]?,
                                       _ currentDirectory: URL?,
-                                      _ standardInput: Any?) -> Process
+                                      _ standardInput: Any?,
+                                      _ userInfo: [String: Any],
+                                      _ stackTrace: CLIStackTrace) -> Process
     
     /// Closure used to identify if the arguments contain any arguments that would show the help screen
     public typealias HelpArgumentIdentifier = (_ arguments: [String]) -> Bool
@@ -164,7 +166,9 @@ open class CLIWrapper: CLICommandCollection {
         func createCLIHelpProcess(_ arguments: [String],
                                   _ environment: [String: String]?,
                                   _ currentDirectory: URL?,
-                                  _ standardInput: Any?) -> Process {
+                                  _ standardInput: Any?,
+                                  _ userInfo: [String: Any] = [:],
+                                  _ stackTrace: CLIStackTrace) -> Process {
             var args = arguments
             if !helpRequestIdentifier(args) {
                 args.append(helpArguments.first!)
@@ -172,7 +176,9 @@ open class CLIWrapper: CLICommandCollection {
             return createCLIProcess(args,
                                     environment,
                                     currentDirectory,
-                                    standardInput)
+                                    standardInput,
+                                    userInfo,
+                                    stackTrace.stacking())
         }
         
         self.rootGroup = .init(command: "",
@@ -213,9 +219,11 @@ open class CLIWrapper: CLICommandCollection {
         }
         
         func createCLIProcess(_ arguments: [String],
-                                  _ environment: [String: String]?,
-                                  _ currentDirectory: URL?,
-                                  _ standardInput: Any?) -> Process {
+                              _ environment: [String: String]?,
+                              _ currentDirectory: URL?,
+                              _ standardInput: Any?,
+                              _ userInfo: [String: Any] = [:],
+                              _ stackTrace: CLIStackTrace) -> Process {
             let rtn = Process()
             
             rtn._cliWrapperExecutable = executable
@@ -236,7 +244,9 @@ open class CLIWrapper: CLICommandCollection {
         func createCLIHelpProcess(_ arguments: [String],
                                   _ environment: [String: String]?,
                                   _ currentDirectory: URL?,
-                                  _ standardInput: Any?) -> Process {
+                                  _ standardInput: Any?,
+                                  _ userInfo: [String: Any] = [:],
+                                  _ stackTrace: CLIStackTrace) -> Process {
             var args = arguments
             if !helpRequestIdentifier(args) {
                 args.append(helpArguments.first!)
@@ -244,7 +254,9 @@ open class CLIWrapper: CLICommandCollection {
             return createCLIProcess(args,
                                     environment,
                                     currentDirectory,
-                                    standardInput)
+                                    standardInput,
+                                    userInfo,
+                                    stackTrace.stacking())
         }
         
         self.rootGroup = .init(command: "",
@@ -274,18 +286,78 @@ open class CLIWrapper: CLICommandCollection {
     ///  - environment: The enviromental variables to set
     ///  - currentDirectory: The current working directory to set
     ///  - standardInput: The standard input to set the core process
+    ///  - userInfo: Any user info to pass to the create process
+    ///  - stackTrace: The calling stack trace
     /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
     @discardableResult
     public func execute(_ arguments: [String],
                         environment: [String: String]? = nil,
                         currentDirectory: URL? = nil,
-                        standardInput: Any? = nil) throws -> Int32 {
+                        standardInput: Any? = nil,
+                        userInfo: [String: Any] = [:],
+                        stackTrace: CLIStackTrace) throws -> Int32 {
         
         return try self.rootGroup.execute(arguments,
                                           environment: environment,
                                           currentDirectory: currentDirectory,
-                                          standardInput: standardInput)
+                                          standardInput: standardInput,
+                                          userInfo: userInfo,
+                                          stackTrace: stackTrace.stacking())
     }
+    
+    #if swift(>=5.3)
+    /// Method used to execute the command action
+    /// - Parameters:
+    ///  - arguments: The arguments for the specific command
+    ///  - environment: The enviromental variables to set
+    ///  - currentDirectory: The current working directory to set
+    ///  - standardInput: The standard input to set the core process
+    ///  - userInfo: Any user info to pass to the create process
+    /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
+    @discardableResult
+    public func execute(_ arguments: [String],
+                        environment: [String: String]? = nil,
+                        currentDirectory: URL? = nil,
+                        standardInput: Any? = nil,
+                        userInfo: [String: Any] = [:],
+                        filePath: StaticString = #filePath,
+                        function: StaticString = #function,
+                        line: UInt = #line) throws -> Int32 {
+        
+        return try self.execute(arguments,
+                                environment: environment,
+                                currentDirectory: currentDirectory,
+                                standardInput: standardInput,
+                                userInfo: userInfo,
+                                stackTrace: .init(filePath: filePath, function: function, line: line))
+    }
+    #else
+    /// Method used to execute the command action
+    /// - Parameters:
+    ///  - arguments: The arguments for the specific command
+    ///  - environment: The enviromental variables to set
+    ///  - currentDirectory: The current working directory to set
+    ///  - standardInput: The standard input to set the core process
+    ///  - userInfo: Any user info to pass to the create process
+    /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
+    @discardableResult
+    public func execute(_ arguments: [String],
+                        environment: [String: String]? = nil,
+                        currentDirectory: URL? = nil,
+                        standardInput: Any? = nil,
+                        userInfo: [String: Any] = [:],
+                        filePath: StaticString = #file,
+                        function: StaticString = #function,
+                        line: UInt = #line) throws -> Int32 {
+        
+        return try self.execute(arguments,
+                                environment: environment,
+                                currentDirectory: currentDirectory,
+                                standardInput: standardInput,
+                                userInfo: userInfo,
+                                stackTrace: .init(filePath: filePath, function: function, line: line))
+    }
+    #endif
     
     /// Method used to execute the command action if not passthrough
     /// - Parameters:
@@ -293,17 +365,74 @@ open class CLIWrapper: CLICommandCollection {
     ///  - environment: The enviromental variables to set
     ///  - currentDirectory: The current working directory to set
     ///  - standardInput: The standard input to set the core process
+    ///  - userInfo: Any user info to pass to the create process
+    ///  - stackTrace: The calling stack trace
     /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
     public func executeIfWrapped(_ arguments: [String],
                                  environment: [String: String]? = nil,
                                  currentDirectory: URL? = nil,
-                                 standardInput: Any? = nil) throws -> Int32? {
+                                 standardInput: Any? = nil,
+                                 userInfo: [String: Any] = [:],
+                                 stackTrace: CLIStackTrace) throws -> Int32? {
         
         return try self.rootGroup.executeIfWrapped(arguments,
                                                    environment: environment,
                                                    currentDirectory: currentDirectory,
-                                                   standardInput: standardInput)
+                                                   standardInput: standardInput,
+                                                   userInfo: userInfo,
+                                                   stackTrace: stackTrace.stacking())
     }
+    #if swift(>=5.3)
+    /// Method used to execute the command action if not passthrough
+    /// - Parameters:
+    ///  - arguments: The arguments for the specific command
+    ///  - environment: The enviromental variables to set
+    ///  - currentDirectory: The current working directory to set
+    ///  - standardInput: The standard input to set the core process
+    ///  - userInfo: Any user info to pass to the create process
+    /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
+    public func executeIfWrapped(_ arguments: [String],
+                                 environment: [String: String]? = nil,
+                                 currentDirectory: URL? = nil,
+                                 standardInput: Any? = nil,
+                                 userInfo: [String: Any] = [:],
+                                 filePath: StaticString = #filePath,
+                                 function: StaticString = #function,
+                                 line: UInt = #line) throws -> Int32? {
+        
+        return try self.executeIfWrapped(arguments,
+                                         environment: environment,
+                                         currentDirectory: currentDirectory,
+                                         standardInput: standardInput,
+                                         userInfo: userInfo,
+                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+    }
+    #else
+    /// Method used to execute the command action if not passthrough
+    /// - Parameters:
+    ///  - arguments: The arguments for the specific command
+    ///  - environment: The enviromental variables to set
+    ///  - currentDirectory: The current working directory to set
+    ///  - standardInput: The standard input to set the core process
+    ///  - userInfo: Any user info to pass to the create process
+    /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
+    public func executeIfWrapped(_ arguments: [String],
+                                 environment: [String: String]? = nil,
+                                 currentDirectory: URL? = nil,
+                                 standardInput: Any? = nil,
+                                 userInfo: [String: Any] = [:],
+                                 filePath: StaticString = #file,
+                                 function: StaticString = #function,
+                                 line: UInt = #line) throws -> Int32? {
+        
+        return try self.executeIfWrapped(arguments,
+                                         environment: environment,
+                                         currentDirectory: currentDirectory,
+                                         standardInput: standardInput,
+                                         userInfo: userInfo,
+                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+    }
+    #endif
 }
 
 // MARK: Create Command Groups
@@ -350,18 +479,78 @@ public extension CLIWrapper {
     ///   - currentDirectory: Set the current working directory
     ///   - message: A custom message to display with the help message.
     ///   If the action is passthrough then the message will be displayed before the real help message
+    ///  - userInfo: Any user info to pass to the create process
+    ///  - stackTrace: The calling stack trace
     /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
     @discardableResult
     func displayUsage(arguments: [String] = [],
                       environment: [String: String]? = nil,
                       currentDirectory: URL? = nil,
-                      withMessage message: String? = nil) throws -> Int32 {
+                      withMessage message: String? = nil,
+                      userInfo: [String: Any] = [:],
+                      stackTrace: CLIStackTrace) throws -> Int32 {
         return try self.rootGroup.executeHelp(argumentStartingAt: 0,
                                               arguments: arguments,
                                               environment: environment,
                                               currentDirectory: currentDirectory,
-                                              withMessage: message)
+                                              withMessage: message,
+                                              userInfo: userInfo,
+                                              stackTrace: stackTrace.stacking())
     }
+    
+    #if swift(>=5.3)
+    /// Executes the help command
+    /// - Parameters:
+    ///   - arguments: An array of all arguments (excluding the executable argument)
+    ///   - environment: The environmental variables to set to the cli sub process if called
+    ///   - currentDirectory: Set the current working directory
+    ///   - message: A custom message to display with the help message.
+    ///   If the action is passthrough then the message will be displayed before the real help message
+    ///  - userInfo: Any user info to pass to the create process
+    /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
+    @discardableResult
+    func displayUsage(arguments: [String] = [],
+                      environment: [String: String]? = nil,
+                      currentDirectory: URL? = nil,
+                      withMessage message: String? = nil,
+                      userInfo: [String: Any] = [:],
+                      filePath: StaticString = #filePath,
+                      function: StaticString = #function,
+                      line: UInt = #line) throws -> Int32 {
+        return try self.displayUsage(arguments: arguments,
+                                     environment: environment,
+                                     currentDirectory: currentDirectory,
+                                     withMessage: message,
+                                     userInfo: userInfo,
+                                     stackTrace: .init(filePath: filePath, function: function, line: line))
+    }
+    #else
+    /// Executes the help command
+    /// - Parameters:
+    ///   - arguments: An array of all arguments (excluding the executable argument)
+    ///   - environment: The environmental variables to set to the cli sub process if called
+    ///   - currentDirectory: Set the current working directory
+    ///   - message: A custom message to display with the help message.
+    ///   If the action is passthrough then the message will be displayed before the real help message
+    ///  - userInfo: Any user info to pass to the create process
+    /// - Returns: Returns the process response code (0 is OK, any other can be an error code)
+    @discardableResult
+    func displayUsage(arguments: [String] = [],
+                      environment: [String: String]? = nil,
+                      currentDirectory: URL? = nil,
+                      withMessage message: String? = nil,
+                      userInfo: [String: Any] = [:],
+                      filePath: StaticString = #file,
+                      function: StaticString = #function,
+                      line: UInt = #line) throws -> Int32 {
+        return try self.displayUsage(arguments: arguments,
+                                     environment: environment,
+                                     currentDirectory: currentDirectory,
+                                     withMessage: message,
+                                     userInfo: userInfo,
+                                     stackTrace: .init(filePath: filePath, function: function, line: line))
+    }
+    #endif
 }
 
 

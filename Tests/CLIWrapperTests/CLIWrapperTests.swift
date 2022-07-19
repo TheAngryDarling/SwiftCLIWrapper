@@ -22,7 +22,9 @@ class CLIWrapperTests: XCTestCase {
              _ arguments: [String],
              _ environment: [String: String]?,
              _ currentDirectory: URL?,
-             _ standardInput: Any?) throws -> Int32 in
+             _ standardInput: Any?,
+             _ userInfo: [String: Any],
+             _ stackTrace: CLIStackTrace) throws -> Int32 in
             
             parent.cli.print("Custom Command")
             return 0
@@ -34,7 +36,9 @@ class CLIWrapperTests: XCTestCase {
              _ arguments: [String],
              _ environment: [String: String]?,
              _ currentDirectory: URL?,
-             _ standardInput: Any?) throws -> Int32 in
+             _ standardInput: Any?,
+             _ userInfo: [String: Any],
+             _ stackTrace: CLIStackTrace) throws -> Int32 in
             
             parent.cli.print("Replacement Build Command")
             return 0
@@ -46,7 +50,9 @@ class CLIWrapperTests: XCTestCase {
              _ argumentStartingAt: Int,
              _ arguments: inout [String],
              _ environment: [String: String]?,
-             _ currentDirectory: URL?) throws -> Int32 in
+             _ currentDirectory: URL?,
+             _ userInfo: [String: Any],
+             _ stackTrace: CLIStackTrace) throws -> Int32 in
             
             parent.cli.print("PreCLI Command")
             return 0
@@ -61,7 +67,9 @@ class CLIWrapperTests: XCTestCase {
              _ arguments: [String],
              _ environment: [String: String]?,
              _ currentDirectory: URL?,
-             _ standardInput: Any?) throws -> Int32 in
+             _ standardInput: Any?,
+             _ userInfo: [String: Any],
+             _ stackTrace: CLIStackTrace) throws -> Int32 in
             
             parent.cli.print("Testing default action")
             return 0
@@ -76,6 +84,8 @@ class CLIWrapperTests: XCTestCase {
              _ arguments: [String],
              _ environment: [String: String]?,
              _ currentDirectory: URL?,
+             _ userInfo: [String: Any],
+             _ stackTrace: CLIStackTrace,
              _ exitStatusCode: Int32) throws -> Int32 in
             
             parent.cli.print("package post response")
@@ -87,7 +97,9 @@ class CLIWrapperTests: XCTestCase {
                                _ arguments: inout [String],
                                _ environment: [String: String]?,
                                _ currentDirectory: URL?,
-                               _ storage: inout [String: Any]?) throws -> Int32 {
+                               _ storage: inout [String: Any]?,
+                               _ userInfo: [String: Any],
+                               _ stackTrace: CLIStackTrace) throws -> Int32 {
             storage = (storage ?? [:])
             storage?["pre"] = true
             
@@ -102,6 +114,8 @@ class CLIWrapperTests: XCTestCase {
                                 _ environment: [String: String]?,
                                 _ currentDirectory: URL?,
                                 _ storage: [String: Any]?,
+                                _ userInfo: [String: Any],
+                                _ stackTrace: CLIStackTrace,
                                 _ exitStatusCode: Int32) throws -> Int32 {
             guard let storage = storage else {
                 parent.cli.printError("Missing storage")

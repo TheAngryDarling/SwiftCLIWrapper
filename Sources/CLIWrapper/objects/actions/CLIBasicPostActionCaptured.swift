@@ -58,14 +58,18 @@ public struct CLIBasicPostActionCaptured<Storage, Captured>: CLIPostActionCaptur
                                   environment: [String: String]?,
                                   currentDirectory: URL?,
                                   storage: Storage?,
-                                  captured: Captured) throws -> Int32 {
+                                  captured: Captured,
+                                  userInfo: [String: Any],
+                                  stackTrace: CLIStackTrace) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
                                 arguments,
                                 environment,
                                 currentDirectory,
                                 storage,
-                                captured)
+                                captured,
+                                userInfo,
+                                stackTrace.stacking())
     }
 }
 
@@ -79,14 +83,18 @@ extension CLIBasicPostActionCaptured where Storage == Void {
                   environment: [String: String]?,
                   currentDirectory: URL?,
                   storage: Storage?,
-                  captured: Captured) throws -> Int32 in
+                  captured: Captured,
+                  userInfo: [String: Any],
+                  stackTrace: CLIStackTrace) throws -> Int32 in
             
             return try handler(parent,
                                argumentStartingAt,
                                arguments,
                                environment,
                                currentDirectory,
-                               captured)
+                               captured,
+                               userInfo,
+                               stackTrace.stacking())
             
         }
     }

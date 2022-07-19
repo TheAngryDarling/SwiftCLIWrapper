@@ -23,12 +23,16 @@ public struct CLIBasicWrappedPreAction<Storage>: CLIWrappedPreAction {
                                  arguments: inout [String],
                                  environment: [String: String]?,
                                  currentDirectory: URL?,
-                                 storage: inout Storage?) throws -> Int32 {
+                                 storage: inout Storage?,
+                                 userInfo: [String: Any],
+                                 stackTrace: CLIStackTrace) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
                                 &arguments,
                                 environment,
                                 currentDirectory,
-                                &storage)
+                                &storage,
+                                userInfo,
+                                stackTrace.stacking())
     }
 }

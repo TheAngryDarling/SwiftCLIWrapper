@@ -12,4 +12,5 @@ import Foundation
 // Jut to reference Lockable for use
 // with CLIWrapper and CLICapture
 @_exported import protocol CLICapture.Lockable
+@_exported import struct CLICapture.CLIStackTrace
 

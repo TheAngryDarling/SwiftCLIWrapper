@@ -24,11 +24,15 @@ public struct CLIBasicPreAction: CLIPreAction {
                                  argumentStartingAt: Int,
                                  arguments: inout [String],
                                  environment: [String: String]?,
-                                 currentDirectory: URL?) throws -> Int32 {
+                                 currentDirectory: URL?,
+                                 userInfo: [String: Any],
+                                 stackTrace: CLIStackTrace) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
                                 &arguments,
                                 environment,
-                                currentDirectory)
+                                currentDirectory,
+                                userInfo,
+                                stackTrace.stacking())
     }
 }

@@ -23,7 +23,9 @@ public extension CLIWrappedAction {
                  arguments: [String],
                  environment: [String: String]?,
                  currentDirectory: URL?,
-                 standardInput: Any?) throws -> Int32 {
+                 standardInput: Any?,
+                 userInfo: [String: Any],
+                 stackTrace: CLIStackTrace) throws -> Int32 {
         
         var arguments = arguments
         var storage: PreAction.Storage? = nil
@@ -32,7 +34,9 @@ public extension CLIWrappedAction {
                                                       arguments: &arguments,
                                                       environment: environment,
                                                       currentDirectory: currentDirectory,
-                                                      storage: &storage)
+                                                      storage: &storage,
+                                                      userInfo: userInfo,
+                                                      stackTrace: stackTrace.stacking())
         
         guard ret == 0 || self.preAction.continueOnPreActionFailure else {
             return ret
@@ -44,7 +48,9 @@ public extension CLIWrappedAction {
                                            environment: environment,
                                            currentDirectory: currentDirectory,
                                            standardInput: standardInput,
-                                           storage: storage)
+                                           storage: storage,
+                                           userInfo: userInfo,
+                                           stackTrace: stackTrace.stacking())
         
     }
 }
