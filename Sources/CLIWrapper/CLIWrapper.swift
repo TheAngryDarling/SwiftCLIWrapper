@@ -71,7 +71,7 @@ open class CLIWrapper: CLICommandCollection {
                                       _ currentDirectory: URL?,
                                       _ standardInput: Any?,
                                       _ userInfo: [String: Any],
-                                      _ stackTrace: CLIStackTrace) -> Process
+                                      _ stackTrace: CodeStackTrace) -> Process
     
     /// Closure used to identify if the arguments contain any arguments that would show the help screen
     public typealias HelpArgumentIdentifier = (_ arguments: [String]) -> Bool
@@ -168,7 +168,7 @@ open class CLIWrapper: CLICommandCollection {
                                   _ currentDirectory: URL?,
                                   _ standardInput: Any?,
                                   _ userInfo: [String: Any] = [:],
-                                  _ stackTrace: CLIStackTrace) -> Process {
+                                  _ stackTrace: CodeStackTrace) -> Process {
             var args = arguments
             if !helpRequestIdentifier(args) {
                 args.append(helpArguments.first!)
@@ -223,7 +223,7 @@ open class CLIWrapper: CLICommandCollection {
                               _ currentDirectory: URL?,
                               _ standardInput: Any?,
                               _ userInfo: [String: Any] = [:],
-                              _ stackTrace: CLIStackTrace) -> Process {
+                              _ stackTrace: CodeStackTrace) -> Process {
             let rtn = Process()
             
             rtn._cliWrapperExecutable = executable
@@ -246,7 +246,7 @@ open class CLIWrapper: CLICommandCollection {
                                   _ currentDirectory: URL?,
                                   _ standardInput: Any?,
                                   _ userInfo: [String: Any] = [:],
-                                  _ stackTrace: CLIStackTrace) -> Process {
+                                  _ stackTrace: CodeStackTrace) -> Process {
             var args = arguments
             if !helpRequestIdentifier(args) {
                 args.append(helpArguments.first!)
@@ -295,7 +295,7 @@ open class CLIWrapper: CLICommandCollection {
                         currentDirectory: URL? = nil,
                         standardInput: Any? = nil,
                         userInfo: [String: Any] = [:],
-                        stackTrace: CLIStackTrace) throws -> Int32 {
+                        stackTrace: CodeStackTrace) throws -> Int32 {
         
         return try self.rootGroup.execute(arguments,
                                           environment: environment,
@@ -322,14 +322,18 @@ open class CLIWrapper: CLICommandCollection {
                         userInfo: [String: Any] = [:],
                         filePath: StaticString = #filePath,
                         function: StaticString = #function,
-                        line: UInt = #line) throws -> Int32 {
+                        line: UInt = #line,
+                        threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.execute(arguments,
                                 environment: environment,
                                 currentDirectory: currentDirectory,
                                 standardInput: standardInput,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
     }
     #else
     /// Method used to execute the command action
@@ -348,14 +352,18 @@ open class CLIWrapper: CLICommandCollection {
                         userInfo: [String: Any] = [:],
                         filePath: StaticString = #file,
                         function: StaticString = #function,
-                        line: UInt = #line) throws -> Int32 {
+                        line: UInt = #line,
+                        threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.execute(arguments,
                                 environment: environment,
                                 currentDirectory: currentDirectory,
                                 standardInput: standardInput,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
     }
     #endif
     
@@ -373,7 +381,7 @@ open class CLIWrapper: CLICommandCollection {
                                  currentDirectory: URL? = nil,
                                  standardInput: Any? = nil,
                                  userInfo: [String: Any] = [:],
-                                 stackTrace: CLIStackTrace) throws -> Int32? {
+                                 stackTrace: CodeStackTrace) throws -> Int32? {
         
         return try self.rootGroup.executeIfWrapped(arguments,
                                                    environment: environment,
@@ -398,14 +406,18 @@ open class CLIWrapper: CLICommandCollection {
                                  userInfo: [String: Any] = [:],
                                  filePath: StaticString = #filePath,
                                  function: StaticString = #function,
-                                 line: UInt = #line) throws -> Int32? {
+                                 line: UInt = #line,
+                                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32? {
         
         return try self.executeIfWrapped(arguments,
                                          environment: environment,
                                          currentDirectory: currentDirectory,
                                          standardInput: standardInput,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
     #else
     /// Method used to execute the command action if not passthrough
@@ -423,14 +435,18 @@ open class CLIWrapper: CLICommandCollection {
                                  userInfo: [String: Any] = [:],
                                  filePath: StaticString = #file,
                                  function: StaticString = #function,
-                                 line: UInt = #line) throws -> Int32? {
+                                 line: UInt = #line,
+                                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32? {
         
         return try self.executeIfWrapped(arguments,
                                          environment: environment,
                                          currentDirectory: currentDirectory,
                                          standardInput: standardInput,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
     #endif
 }
@@ -488,7 +504,7 @@ public extension CLIWrapper {
                       currentDirectory: URL? = nil,
                       withMessage message: String? = nil,
                       userInfo: [String: Any] = [:],
-                      stackTrace: CLIStackTrace) throws -> Int32 {
+                      stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.rootGroup.executeHelp(argumentStartingAt: 0,
                                               arguments: arguments,
                                               environment: environment,
@@ -516,13 +532,17 @@ public extension CLIWrapper {
                       userInfo: [String: Any] = [:],
                       filePath: StaticString = #filePath,
                       function: StaticString = #function,
-                      line: UInt = #line) throws -> Int32 {
+                      line: UInt = #line,
+                      threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.displayUsage(arguments: arguments,
                                      environment: environment,
                                      currentDirectory: currentDirectory,
                                      withMessage: message,
                                      userInfo: userInfo,
-                                     stackTrace: .init(filePath: filePath, function: function, line: line))
+                                     stackTrace: .init(filePath: filePath,
+                                                       function: function,
+                                                       line: line,
+                                                       threadDetails: threadDetails))
     }
     #else
     /// Executes the help command
@@ -542,13 +562,17 @@ public extension CLIWrapper {
                       userInfo: [String: Any] = [:],
                       filePath: StaticString = #file,
                       function: StaticString = #function,
-                      line: UInt = #line) throws -> Int32 {
+                      line: UInt = #line,
+                      threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.displayUsage(arguments: arguments,
                                      environment: environment,
                                      currentDirectory: currentDirectory,
                                      withMessage: message,
                                      userInfo: userInfo,
-                                     stackTrace: .init(filePath: filePath, function: function, line: line))
+                                     stackTrace: .init(filePath: filePath,
+                                                       function: function,
+                                                       line: line,
+                                                       threadDetails: threadDetails))
     }
     #endif
 }

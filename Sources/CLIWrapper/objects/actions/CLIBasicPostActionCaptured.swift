@@ -60,7 +60,7 @@ public struct CLIBasicPostActionCaptured<Storage, Captured>: CLIPostActionCaptur
                                   storage: Storage?,
                                   captured: Captured,
                                   userInfo: [String: Any],
-                                  stackTrace: CLIStackTrace) throws -> Int32 {
+                                  stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
                                 arguments,
@@ -85,7 +85,7 @@ extension CLIBasicPostActionCaptured where Storage == Void {
                   storage: Storage?,
                   captured: Captured,
                   userInfo: [String: Any],
-                  stackTrace: CLIStackTrace) throws -> Int32 in
+                  stackTrace: CodeStackTrace) throws -> Int32 in
             
             return try handler(parent,
                                argumentStartingAt,

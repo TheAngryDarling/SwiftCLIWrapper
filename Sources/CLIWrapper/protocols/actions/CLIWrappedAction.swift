@@ -25,7 +25,7 @@ public extension CLIWrappedAction {
                  currentDirectory: URL?,
                  standardInput: Any?,
                  userInfo: [String: Any],
-                 stackTrace: CLIStackTrace) throws -> Int32 {
+                 stackTrace: CodeStackTrace) throws -> Int32 {
         
         var arguments = arguments
         var storage: PreAction.Storage? = nil

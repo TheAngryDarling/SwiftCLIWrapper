@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import struct CLICapture.CLIStackTrace
+import struct CLICapture.CodeStackTrace
 
 /// Execute the given action
 /// - Parameters:
@@ -25,7 +25,7 @@ public typealias CLIPreActionHandler = (_ parent: CLICommandGroup,
                                         _ environment: [String: String]?,
                                         _ currentDirectory: URL?,
                                         _ userInfo: [String: Any],
-                                        _ stackTrace: CLIStackTrace) throws -> Int32
+                                        _ stackTrace: CodeStackTrace) throws -> Int32
 
 /// Defining a general action that occurs before execution the CLI process
 public protocol CLIPreAction: CLIAction {
@@ -51,7 +51,7 @@ public protocol CLIPreAction: CLIAction {
                           environment: [String: String]?,
                           currentDirectory: URL?,
                           userInfo: [String: Any],
-                          stackTrace: CLIStackTrace) throws -> Int32
+                          stackTrace: CodeStackTrace) throws -> Int32
 }
 
 #if swift(>=5.3)
@@ -76,14 +76,18 @@ public extension CLIPreAction {
                           userInfo: [String: Any] = [:],
                           filePath: StaticString = #filePath,
                           function: StaticString = #function,
-                          line: UInt = #line) throws -> Int32 {
+                          line: UInt = #line,
+                          threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.executePreAction(parent: parent,
                                          argumentStartingAt: argumentStartingAt,
                                          arguments: &arguments,
                                          environment: environment,
                                          currentDirectory: currentDirectory,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
 }
 #else
@@ -108,14 +112,18 @@ public extension CLIPreAction {
                           userInfo: [String: Any] = [:],
                           filePath: StaticString = #file,
                           function: StaticString = #function,
-                          line: UInt = #line) throws -> Int32 {
+                          line: UInt = #line,
+                          threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.executePreAction(parent: parent,
                                          argumentStartingAt: argumentStartingAt,
                                          arguments: &arguments,
                                          environment: environment,
                                          currentDirectory: currentDirectory,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
 }
 #endif
@@ -139,7 +147,7 @@ public extension CLIPreAction {
                           arguments: inout [String],
                           environment: [String: String]?,
                           currentDirectory: URL?,
-                          stackTrace: CLIStackTrace) throws -> Int32 {
+                          stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.executePreAction(parent: parent,
                                          argumentStartingAt: argumentStartingAt,
                                          arguments: &arguments,
@@ -159,7 +167,7 @@ public extension CLIPreAction {
                  currentDirectory: URL?,
                  standardInput: Any?,
                  userInfo: [String: Any],
-                 stackTrace: CLIStackTrace) throws -> Int32 {
+                 stackTrace: CodeStackTrace) throws -> Int32 {
         var arguments = arguments
         let ret = try self.executePreAction(parent: parent,
                                             argumentStartingAt: argumentStartingAt,

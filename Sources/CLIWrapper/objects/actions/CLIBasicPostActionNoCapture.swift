@@ -62,7 +62,7 @@ public struct CLIBasicPostActionNoCapture<Storage>: CLIPostActionNoCapture {
                                   currentDirectory: URL?,
                                   storage: Storage?,
                                   userInfo: [String: Any],
-                                  stackTrace: CLIStackTrace,
+                                  stackTrace: CodeStackTrace,
                                   exitStatusCode: Int32) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
@@ -88,7 +88,7 @@ public extension CLIBasicPostActionNoCapture where Storage == Void {
                   currentDirectory: URL?,
                   storage: Storage?,
                   userInfo: [String: Any],
-                  stackTrace: CLIStackTrace,
+                  stackTrace: CodeStackTrace,
                   exitStatusCode: Int32) throws -> Int32 in
             
             return try handler(parent,

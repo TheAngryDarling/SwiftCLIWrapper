@@ -9,7 +9,7 @@
 import Foundation
 import Dispatch
 import RegEx
-import struct CLICapture.CLIStackTrace
+import struct CLICapture.CodeStackTrace
 
 
 /// Class representing a basic CLI Command
@@ -75,7 +75,7 @@ public class CLICommand {
                                    currentDirectory: URL? = nil,
                                    standardInput: Any? = nil,
                                    userInfo: [String: Any] = [:],
-                                   stackTrace: CLIStackTrace) throws -> Int32? {
+                                   stackTrace: CodeStackTrace) throws -> Int32? {
         return try self.action?.execute(parent: parent,
                                         argumentStartingAt: argumentStartingAt,
                                         arguments: arguments,
@@ -102,7 +102,7 @@ public class CLICommand {
                           currentDirectory: URL? = nil,
                           standardInput: Any? = nil,
                           userInfo: [String: Any] = [:],
-                          stackTrace: CLIStackTrace) throws -> Int32 {
+                          stackTrace: CodeStackTrace) throws -> Int32 {
         guard let ret = try self.executeIfWrapped(parent: parent,
                                                   argumentStartingAt: argumentStartingAt,
                                                   arguments: arguments,

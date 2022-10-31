@@ -25,7 +25,7 @@ public struct CLIBasicWrappedPreAction<Storage>: CLIWrappedPreAction {
                                  currentDirectory: URL?,
                                  storage: inout Storage?,
                                  userInfo: [String: Any],
-                                 stackTrace: CLIStackTrace) throws -> Int32 {
+                                 stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
                                 &arguments,

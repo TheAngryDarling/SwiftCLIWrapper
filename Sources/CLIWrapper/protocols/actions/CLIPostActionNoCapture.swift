@@ -28,7 +28,7 @@ public typealias CLIPostActionNoCaptureHandler<Storage> = (_ parent: CLICommandG
                                                            _ currentDirectory: URL?,
                                                            _ storage: Storage?,
                                                            _ userInfo: [String: Any],
-                                                           _ stackTrace: CLIStackTrace,
+                                                           _ stackTrace: CodeStackTrace,
                                                            _ exitStatusCode: Int32) throws -> Int32
 /// Execute the given action
 /// - Parameters:
@@ -47,7 +47,7 @@ public typealias CLIPostActionNoCaptureNoStorageHandler = (_ parent: CLICommandG
                                                            _ environment: [String: String]?,
                                                            _ currentDirectory: URL?,
                                                            _ userInfo: [String: Any],
-                                                           _ stackTrace: CLIStackTrace,
+                                                           _ stackTrace: CodeStackTrace,
                                                            _ exitStatusCode: Int32) throws -> Int32
 
 /// Defining a post action that does not capture  CLI outputs
@@ -72,7 +72,7 @@ public protocol CLIPostActionNoCapture: CLIPostAction, CLIAction {
                            currentDirectory: URL?,
                            storage: Storage?,
                            userInfo: [String: Any],
-                           stackTrace: CLIStackTrace,
+                           stackTrace: CodeStackTrace,
                            exitStatusCode: Int32) throws -> Int32
 }
 
@@ -101,6 +101,7 @@ public extension CLIPostActionNoCapture {
                            filePath: StaticString = #filePath,
                            function: StaticString = #function,
                            line: UInt = #line,
+                           threadDetails: CodeStackTrace.ThreadDetails = .init(),
                            exitStatusCode: Int32) throws -> Int32 {
         return try self.executePostAction(parent: parent,
                                           argumentStartingAt: argumentStartingAt,
@@ -109,7 +110,10 @@ public extension CLIPostActionNoCapture {
                                           currentDirectory: currentDirectory,
                                           storage: storage,
                                           userInfo: userInfo,
-                                          stackTrace: .init(filePath: filePath, function: function, line: line),
+                                          stackTrace: .init(filePath: filePath,
+                                                            function: function,
+                                                            line: line,
+                                                            threadDetails: threadDetails),
                                           exitStatusCode: exitStatusCode)
     }
 }
@@ -138,6 +142,7 @@ public extension CLIPostActionNoCapture {
                            filePath: StaticString = #file,
                            function: StaticString = #function,
                            line: UInt = #line,
+                           threadDetails: CodeStackTrace.ThreadDetails = .init(),
                            exitStatusCode: Int32) throws -> Int32 {
         return try self.executePostAction(parent: parent,
                                           argumentStartingAt: argumentStartingAt,
@@ -146,7 +151,10 @@ public extension CLIPostActionNoCapture {
                                           currentDirectory: currentDirectory,
                                           storage: storage,
                                           userInfo: userInfo,
-                                          stackTrace: .init(filePath: filePath, function: function, line: line),
+                                          stackTrace: .init(filePath: filePath,
+                                                            function: function,
+                                                            line: line,
+                                                            threadDetails: threadDetails),
                                           exitStatusCode: exitStatusCode)
     }
 }
@@ -172,7 +180,7 @@ public extension CLIPostActionNoCapture {
                            environment: [String: String]?,
                            currentDirectory: URL?,
                            storage: Storage?,
-                           stackTrace: CLIStackTrace,
+                           stackTrace: CodeStackTrace,
                            exitStatusCode: Int32) throws -> Int32 {
         return try self.executePostAction(parent: parent,
                                           argumentStartingAt: argumentStartingAt,
@@ -196,7 +204,7 @@ public extension CLIPostActionNoCapture {
                  standardInput: Any?,
                  storage: Storage?,
                  userInfo: [String: Any],
-                 stackTrace: CLIStackTrace) throws -> Int32 {
+                 stackTrace: CodeStackTrace) throws -> Int32 {
         
         var storage: Storage? = storage
         
@@ -236,7 +244,7 @@ public extension CLIPostActionNoCapture {
                  currentDirectory: URL?,
                  standardInput: Any?,
                  userInfo: [String: Any],
-                 stackTrace: CLIStackTrace) throws -> Int32 {
+                 stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.execute(parent: parent,
                                 argumentStartingAt: argumentStartingAt,
                                 arguments: arguments,

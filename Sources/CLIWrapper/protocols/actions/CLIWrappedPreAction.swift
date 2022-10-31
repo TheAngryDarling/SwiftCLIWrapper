@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import struct CLICapture.CLIStackTrace
+import struct CLICapture.CodeStackTrace
 
 /// Execute the given action
 /// - Parameters:
@@ -26,7 +26,7 @@ public typealias CLIWrappedPreActionHandler<Storage> = (_ parent: CLICommandGrou
                                                         _ currentDirectory: URL?,
                                                         _ storage: inout Storage?,
                                                         _ userInfo: [String: Any],
-                                                        _ stackTrace: CLIStackTrace) throws -> Int32
+                                                        _ stackTrace: CodeStackTrace) throws -> Int32
 
 /// Defining a general action that occurs before execution the CLI process
 /// for use with CLIWrappedAction
@@ -54,7 +54,7 @@ public protocol CLIWrappedPreAction {
                           currentDirectory: URL?,
                           storage: inout Storage?,
                           userInfo: [String: Any],
-                          stackTrace: CLIStackTrace) throws -> Int32
+                          stackTrace: CodeStackTrace) throws -> Int32
 }
 
 #if swift(>=5.3)
@@ -79,7 +79,8 @@ public extension CLIWrappedPreAction {
                           userInfo: [String: Any] = [:],
                           filePath: StaticString = #filePath,
                           function: StaticString = #function,
-                          line: UInt = #line) throws -> Int32 {
+                          line: UInt = #line,
+                          threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.executePreAction(parent: parent,
                                          argumentStartingAt: argumentStartingAt,
                                          arguments: &arguments,
@@ -87,7 +88,10 @@ public extension CLIWrappedPreAction {
                                          currentDirectory: currentDirectory,
                                          storage: &storage,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
 }
 #else
@@ -112,7 +116,8 @@ public extension CLIWrappedPreAction {
                           userInfo: [String: Any] = [:],
                           filePath: StaticString = #file,
                           function: StaticString = #function,
-                          line: UInt = #line) throws -> Int32 {
+                          line: UInt = #line,
+                          threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.executePreAction(parent: parent,
                                          argumentStartingAt: argumentStartingAt,
                                          arguments: &arguments,
@@ -120,7 +125,10 @@ public extension CLIWrappedPreAction {
                                          currentDirectory: currentDirectory,
                                          storage: &storage,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
 }
 #endif
@@ -144,7 +152,7 @@ public extension CLIWrappedPreAction {
                           environment: [String: String]?,
                           currentDirectory: URL?,
                           storage: inout Storage?,
-                          stackTrace: CLIStackTrace) throws -> Int32 {
+                          stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.executePreAction(parent: parent,
                                          argumentStartingAt: argumentStartingAt,
                                          arguments: &arguments,

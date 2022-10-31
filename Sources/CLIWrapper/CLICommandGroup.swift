@@ -36,7 +36,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                             currentDirectory: URL? = nil,
                             withMessage message: String? = nil,
                             userInfo: [String: Any] = [:],
-                            stackTrace: CLIStackTrace) throws -> Int32 {
+                            stackTrace: CodeStackTrace) throws -> Int32 {
             
             switch self {
                 case .useParentAction:
@@ -83,7 +83,8 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                             userInfo: [String: Any] = [:],
                             filePath: StaticString = #filePath,
                             function: StaticString = #function,
-                            line: UInt = #line) throws -> Int32 {
+                            line: UInt = #line,
+                            threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
             return try self.execute(parent: parent,
                                     argumentStartingAt: argumentStartingAt,
                                     arguments: arguments,
@@ -91,7 +92,10 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                     currentDirectory: currentDirectory,
                                     withMessage: message,
                                     userInfo: userInfo,
-                                    stackTrace: .init(filePath: filePath, function: function, line: line))
+                                    stackTrace: .init(filePath: filePath,
+                                                      function: function,
+                                                      line: line,
+                                                      threadDetails: threadDetails))
         }
         #else
         public func execute(parent: CLICommandGroup,
@@ -103,7 +107,8 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                             userInfo: [String: Any] = [:],
                             filePath: StaticString = #file,
                             function: StaticString = #function,
-                            line: UInt = #line) throws -> Int32 {
+                            line: UInt = #line,
+                            threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
             return try self.execute(parent: parent,
                                     argumentStartingAt: argumentStartingAt,
                                     arguments: arguments,
@@ -111,7 +116,10 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                     currentDirectory: currentDirectory,
                                     withMessage: message,
                                     userInfo: userInfo,
-                                    stackTrace: .init(filePath: filePath, function: function, line: line))
+                                    stackTrace: .init(filePath: filePath,
+                                                      function: function,
+                                                      line: line,
+                                                      threadDetails: threadDetails))
         }
         #endif
     }
@@ -295,7 +303,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                             currentDirectory: URL? = nil,
                                             standardInput: Any? = nil,
                                             userInfo: [String: Any] = [:],
-                                            stackTrace: CLIStackTrace) throws -> Int32? {
+                                            stackTrace: CodeStackTrace) throws -> Int32? {
         func getCommand(arguments: [String],
                         argumentStartingAt: Int) -> (cmd: CLICommand, startingAt: Int)? {
             guard self.supportPreCommandArguments else {
@@ -359,7 +367,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                    currentDirectory: URL? = nil,
                                    standardInput: Any? = nil,
                                    userInfo: [String: Any] = [:],
-                                   stackTrace: CLIStackTrace) throws -> Int32 {
+                                   stackTrace: CodeStackTrace) throws -> Int32 {
         
         if arguments.count > argumentStartingAt,
            let command = self.commands.first(where: { return $0.command.matches(arguments[argumentStartingAt]) }) {
@@ -412,7 +420,7 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                             currentDirectory: URL? = nil,
                             withMessage message: String? = nil,
                             userInfo: [String: Any] = [:],
-                            stackTrace: CLIStackTrace) throws -> Int32 {
+                            stackTrace: CodeStackTrace) throws -> Int32 {
         
         return try self.helpAction.execute(parent: self,
                                            argumentStartingAt: argumentStartingAt,
@@ -444,7 +452,8 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                             userInfo: [String: Any] = [:],
                             filePath: StaticString = #filePath,
                             function: StaticString = #function,
-                            line: UInt = #line) throws -> Int32 {
+                            line: UInt = #line,
+                            threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.executeHelp(argumentStartingAt: argumentStartingAt,
                                     arguments: arguments,
@@ -452,7 +461,10 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                     currentDirectory: currentDirectory,
                                     withMessage: message,
                                     userInfo: userInfo,
-                                    stackTrace: .init(filePath: filePath, function: function, line: line))
+                                    stackTrace: .init(filePath: filePath,
+                                                      function: function,
+                                                      line: line,
+                                                      threadDetails: threadDetails))
     }
     #else
     /// Executes the help command
@@ -474,7 +486,8 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                             userInfo: [String: Any] = [:],
                             filePath: StaticString = #file,
                             function: StaticString = #function,
-                            line: UInt = #line) throws -> Int32 {
+                            line: UInt = #line,
+                            threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.executeHelp(argumentStartingAt: argumentStartingAt,
                                     arguments: arguments,
@@ -482,7 +495,10 @@ public class CLICommandGroup: CLICommand, CLICommandCollection {
                                     currentDirectory: currentDirectory,
                                     withMessage: message,
                                     userInfo: userInfo,
-                                    stackTrace: .init(filePath: filePath, function: function, line: line))
+                                    stackTrace: .init(filePath: filePath,
+                                                      function: function,
+                                                      line: line,
+                                                      threadDetails: threadDetails))
     }
     #endif
 }
@@ -502,7 +518,7 @@ public extension CLICommandGroup {
                           currentDirectory: URL? = nil,
                           standardInput: Any? = nil,
                           userInfo: [String: Any] = [:],
-                          stackTrace: CLIStackTrace) throws -> Int32? {
+                          stackTrace: CodeStackTrace) throws -> Int32? {
         return try self.rootGroup.executeIfWrapped(parent: self.rootGroup,
                                                    argumentStartingAt: 0,
                                                    arguments: arguments,
@@ -529,13 +545,17 @@ public extension CLICommandGroup {
                           userInfo: [String: Any] = [:],
                           filePath: StaticString = #filePath,
                           function: StaticString = #function,
-                          line: UInt = #line) throws -> Int32? {
+                          line: UInt = #line,
+                          threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32? {
         return try self.executeIfWrapped(arguments,
                                          environment: environment,
                                          currentDirectory: currentDirectory,
                                          standardInput: standardInput,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
     #else
     /// Method used to execute the command action if not passthrough
@@ -553,13 +573,17 @@ public extension CLICommandGroup {
                           userInfo: [String: Any] = [:],
                           filePath: StaticString = #file,
                           function: StaticString = #function,
-                          line: UInt = #line) throws -> Int32? {
+                          line: UInt = #line,
+                          threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32? {
         return try self.executeIfWrapped(arguments,
                                          environment: environment,
                                          currentDirectory: currentDirectory,
                                          standardInput: standardInput,
                                          userInfo: userInfo,
-                                         stackTrace: .init(filePath: filePath, function: function, line: line))
+                                         stackTrace: .init(filePath: filePath,
+                                                           function: function,
+                                                           line: line,
+                                                           threadDetails: threadDetails))
     }
     #endif
     
@@ -578,7 +602,7 @@ public extension CLICommandGroup {
                  currentDirectory: URL? = nil,
                  standardInput: Any? = nil,
                  userInfo: [String: Any] = [:],
-                 stackTrace: CLIStackTrace) throws -> Int32 {
+                 stackTrace: CodeStackTrace) throws -> Int32 {
         
         return try self.rootGroup.execute(parent: self.rootGroup,
                                           argumentStartingAt: 0,
@@ -608,14 +632,18 @@ public extension CLICommandGroup {
                  userInfo: [String: Any] = [:],
                  filePath: StaticString = #filePath,
                  function: StaticString = #function,
-                 line: UInt = #line) throws -> Int32 {
+                 line: UInt = #line,
+                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.execute(arguments,
                                 environment: environment,
                                 currentDirectory: currentDirectory,
                                 standardInput: standardInput,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
         
     }
     #else
@@ -635,14 +663,18 @@ public extension CLICommandGroup {
                  userInfo: [String: Any] = [:],
                  filePath: StaticString = #file,
                  function: StaticString = #function,
-                 line: UInt = #line) throws -> Int32 {
+                 line: UInt = #line,
+                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.execute(arguments,
                                 environment: environment,
                                 currentDirectory: currentDirectory,
                                 standardInput: standardInput,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
         
     }
     #endif

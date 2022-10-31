@@ -15,7 +15,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/TheAngryDarling/SwiftCLICapture.git",
-                 from: "3.0.0"),
+                 from: "3.0.2"),
         .package(url: "https://github.com/TheAngryDarling/SwiftRegEx.git",
                  from: "1.1.0")
     ],

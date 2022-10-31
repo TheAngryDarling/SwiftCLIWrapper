@@ -42,7 +42,7 @@ public protocol CLIPostAction {
                  standardInput: Any?,
                  storage: Storage?,
                  userInfo: [String: Any],
-                 stackTrace: CLIStackTrace) throws -> Int32
+                 stackTrace: CodeStackTrace) throws -> Int32
 }
 
 #if swift(>=5.3)
@@ -72,7 +72,8 @@ public extension CLIPostAction {
                  userInfo: [String: Any] = [:],
                  filePath: StaticString = #filePath,
                  function: StaticString = #function,
-                 line: UInt = #line) throws -> Int32 {
+                 line: UInt = #line,
+                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.execute(parent: parent,
                                 argumentStartingAt: argumentStartingAt,
@@ -82,7 +83,10 @@ public extension CLIPostAction {
                                 standardInput: standardInput,
                                 storage: storage,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
         
     }
 }
@@ -113,7 +117,8 @@ public extension CLIPostAction {
                  userInfo: [String: Any] = [:],
                  filePath: StaticString = #file,
                  function: StaticString = #function,
-                 line: UInt = #line) throws -> Int32 {
+                 line: UInt = #line,
+                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         
         return try self.execute(parent: parent,
                                 argumentStartingAt: argumentStartingAt,
@@ -123,7 +128,10 @@ public extension CLIPostAction {
                                 standardInput: standardInput,
                                 storage: storage,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
         
     }
 }
@@ -153,7 +161,7 @@ public extension CLIPostAction {
                  currentDirectory: URL?,
                  standardInput: Any?,
                  storage: Storage?,
-                 stackTrace: CLIStackTrace) throws -> Int32 {
+                 stackTrace: CodeStackTrace) throws -> Int32 {
     
         return try self.execute(parent: parent,
                                 argumentStartingAt: argumentStartingAt,

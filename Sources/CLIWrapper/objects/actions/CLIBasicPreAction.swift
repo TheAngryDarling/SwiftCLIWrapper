@@ -26,7 +26,7 @@ public struct CLIBasicPreAction: CLIPreAction {
                                  environment: [String: String]?,
                                  currentDirectory: URL?,
                                  userInfo: [String: Any],
-                                 stackTrace: CLIStackTrace) throws -> Int32 {
+                                 stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.handler(parent,
                                 argumentStartingAt,
                                 &arguments,

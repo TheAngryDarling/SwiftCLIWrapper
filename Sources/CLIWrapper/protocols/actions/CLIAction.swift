@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import struct CLICapture.CLIStackTrace
+import struct CLICapture.CodeStackTrace
 
 /// Execute the given action
 /// - Parameters:
@@ -26,7 +26,7 @@ public typealias CLIActionHandler = (_ parent: CLICommandGroup,
                                      _ currentDirectory: URL?,
                                      _ standardInput: Any?,
                                      _ userInfo: [String: Any],
-                                     _ stackTrace: CLIStackTrace) throws -> Int32
+                                     _ stackTrace: CodeStackTrace) throws -> Int32
 /// A General Action to be executed
 public protocol CLIAction {
    
@@ -48,7 +48,7 @@ public protocol CLIAction {
                  currentDirectory: URL?,
                  standardInput: Any?,
                  userInfo: [String: Any],
-                 stackTrace: CLIStackTrace) throws -> Int32
+                 stackTrace: CodeStackTrace) throws -> Int32
 }
 
 #if swift(>=5.3)
@@ -73,7 +73,8 @@ public extension CLIAction {
                  userInfo: [String: Any] = [:],
                  filePath: StaticString = #filePath,
                  function: StaticString = #function,
-                 line: UInt = #line) throws -> Int32 {
+                 line: UInt = #line,
+                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.execute(parent: parent,
                                 argumentStartingAt: argumentStartingAt,
                                 arguments: arguments,
@@ -81,7 +82,10 @@ public extension CLIAction {
                                 currentDirectory: currentDirectory,
                                 standardInput: standardInput,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
     }
 }
 #else
@@ -106,7 +110,8 @@ public extension CLIAction {
                  userInfo: [String: Any] = [:],
                  filePath: StaticString = #file,
                  function: StaticString = #function,
-                 line: UInt = #line) throws -> Int32 {
+                 line: UInt = #line,
+                 threadDetails: CodeStackTrace.ThreadDetails = .init()) throws -> Int32 {
         return try self.execute(parent: parent,
                                 argumentStartingAt: argumentStartingAt,
                                 arguments: arguments,
@@ -114,7 +119,10 @@ public extension CLIAction {
                                 currentDirectory: currentDirectory,
                                 standardInput: standardInput,
                                 userInfo: userInfo,
-                                stackTrace: .init(filePath: filePath, function: function, line: line))
+                                stackTrace: .init(filePath: filePath,
+                                                  function: function,
+                                                  line: line,
+                                                  threadDetails: threadDetails))
     }
 }
 #endif
@@ -137,7 +145,7 @@ public extension CLIAction {
                  environment: [String: String]?,
                  currentDirectory: URL?,
                  standardInput: Any?,
-                 stackTrace: CLIStackTrace) throws -> Int32 {
+                 stackTrace: CodeStackTrace) throws -> Int32 {
         return try self.execute(parent: parent,
                                 argumentStartingAt: argumentStartingAt,
                                 arguments: arguments,
